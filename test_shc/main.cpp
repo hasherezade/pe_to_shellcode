@@ -6,7 +6,8 @@
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cerr << "Args: <shellcode_file>" << std::endl;
+		std::cout << "Test shellcode: loads and deploys the shellcode file" << std::endl;
+		std::cout << "Args: <shellcode_file>" << std::endl;
 		system("pause");
 		return 0;
 	}
