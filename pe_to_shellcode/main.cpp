@@ -13,7 +13,6 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 		"\x59\x04\x00\x00" // value
 		"\x53\xC3";
 	raw -= 7; //offset
-	//TODO: peconv virtual to raw
 	memcpy(redir_code + 10, &raw, sizeof(DWORD));
 	memcpy(my_exe, redir_code, sizeof(redir_code));
 	return true;
