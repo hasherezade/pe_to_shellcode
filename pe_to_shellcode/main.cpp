@@ -4,6 +4,8 @@
 #include "peconv.h"
 #include "resource.h"
 
+#define VERSION "0.2"
+
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 {
 	BYTE redir_code[] = "\x4D\x5A"
@@ -69,7 +71,7 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cout << "PE to shellcode" << std::endl;
+		std::cout << "PE to shellcode v." << VERSION << " - EXPERIMENTAL"<< std::endl;
 		std::cout << "Args: <input_file> [output_file]" << std::endl;
 		system("pause");
 		return 0;
