@@ -65,6 +65,16 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 		std::cout << "Subsystem must be GUI!" << std::endl;
 		return false;
 	}
+	IMAGE_DATA_DIRECTORY* dotnet_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
+	if (dotnet_dir) {
+		std::cout << ".NET applications are not supported!" << std::endl;
+		return false;
+	}
+	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
+	if (tls_dir) {
+		std::cout << "Applications with TLS callbacks are not supported!" << std::endl;
+		return false;
+	}
 	return true;
 }
 
