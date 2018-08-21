@@ -9,3 +9,9 @@ Use recursive clone to get the repo together with all the submodules:
 <pre>
 git clone --recursive https://github.com/hasherezade/pe_to_shellcode.git
 </pre>
+Latest builds*:
+-
+*those builds are available for testing and they may be ahead of the official release:
++ [pe_to_shellcode32.exe](https://goo.gl/LfJaVZ) - PE to shellcode converter
++ [test_shc32.exe](https://goo.gl/xi3fzQ) - a utility to test the shellcode (loads and deploys)
+<hr/>
