@@ -9,11 +9,16 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 	BYTE redir_code[] = "\x4D\x5A"
 		"\xE8\x00\x00\x00\x00"
 		"\x5B" // pop ebx
+		"\x83\xEB\x07" // sub ebx,7
+		"\x53" // push ebx (Image Base)
 		"\x81\xC3" // add ebx,
 		"\x59\x04\x00\x00" // value
-		"\x53\xC3";
-	raw -= 7; //offset
-	memcpy(redir_code + 10, &raw, sizeof(DWORD));
+		"\xFF\xD3" // call ebx
+		"\xc3"; // ret
+
+	size_t offset = sizeof(redir_code) - 8;
+
+	memcpy(redir_code + offset, &raw, sizeof(DWORD));
 	memcpy(my_exe, redir_code, sizeof(redir_code));
 	return true;
 }
