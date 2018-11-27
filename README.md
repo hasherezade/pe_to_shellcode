@@ -1,4 +1,6 @@
 # pe_to_shellcode
+[![Build status](https://ci.appveyor.com/api/projects/status/w3dy81u0k3up7459?svg=true)](https://ci.appveyor.com/project/hasherezade/pe-to-shellcode)
+
 Converts PE so that it can be then injected just like a normal shellcode.<br/>
 Currently only 32 bit PE files are supported.<br/>
 <b>WARNING: This is an early draft of this tool! It is available for experimental purposes only. I don't guarantee stability of the outputs.</b>
