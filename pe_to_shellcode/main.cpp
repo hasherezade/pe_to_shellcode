@@ -4,7 +4,7 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "0.2"
+#define VERSION "0.3"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 {
@@ -78,10 +78,18 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 	return true;
 }
 
+std::string make_out_name(std::string input_file)
+{
+	size_t found_indx = input_file.find_last_of(".");
+	std::string ext = input_file.substr(found_indx + 1);
+	std::string name = input_file.substr(0, found_indx);
+	return name + ".shc." + ext;
+}
+
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cout << "PE to shellcode v." << VERSION << " - EXPERIMENTAL"<< std::endl;
+		std::cout << "PE to shellcode v." << VERSION << std::endl;
 		std::cout << "Args: <input_file> [output_file]" << std::endl;
 		system("pause");
 		return 0;
@@ -89,7 +97,7 @@ int main(int argc, char *argv[])
 
 	size_t exe_size = 0;
 	std::string in_path = argv[1];
-	std::string  out_str = in_path + ".shc";
+	std::string  out_str = make_out_name(in_path);
 	if (argc > 2) {
 		out_str = argv[2];
 	}
