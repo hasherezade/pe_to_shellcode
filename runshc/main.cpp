@@ -33,11 +33,14 @@ int main(int argc, char *argv[])
 	//copy file content into executable buffer:
 	memcpy(test_buf, my_exe, exe_size);
 
+	//free the original buffer:
+	peconv::free_file(my_exe);
+	my_exe = nullptr;
+
 	//run it:
-	void (*my_main)() = (void (*)()) ((ULONGLONG)test_buf);
-	my_main();
+	int (*my_main)() = (int(*)()) ((ULONGLONG)test_buf);
+	int ret_val = my_main();
 	
 	peconv::free_aligned(test_buf, exe_size);
-	peconv::free_file(my_exe);
-	return 0; 
+	return ret_val;
 }
