@@ -145,9 +145,13 @@ import_dll:
         call    dword [ebx + mapstk_size + krncrcstk.kLoadLibraryA]
         xchg    ecx, eax
         mov     edi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idFirstThunk]
-        add     edi, dword [ebx]
         mov     esi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idOriginalFirstThunk]
+        test esi, esi ;if OriginalFirstThunk is NULL... 
+        jne thunks_continue
+            mov esi, edi ; use FirstThunk instead of OriginalFirstThunk
+        thunks_continue:
         add     esi, dword [ebx]
+        add     edi, dword [ebx]
 
 import_thunks:
         lodsd
