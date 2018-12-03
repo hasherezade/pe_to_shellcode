@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-project ( test_shc )
+project ( runshc )
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 

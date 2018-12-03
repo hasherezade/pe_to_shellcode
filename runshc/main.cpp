@@ -6,7 +6,8 @@
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cout << "Test shellcode: loads and deploys the shellcode file" << std::endl;
+		std::cout << "~ runshc ~\n"
+			<< "Run shellcode: loads and deploys shellcode file.\n";
 		std::cout << "Args: <shellcode_file>" << std::endl;
 		system("pause");
 		return 0;
@@ -24,10 +25,19 @@ int main(int argc, char *argv[])
 
 	std::cout << "Test it!" << std::endl;
 	BYTE *test_buf = peconv::alloc_aligned(exe_size, PAGE_EXECUTE_READWRITE);
-	if (test_buf) {
-		memcpy(test_buf, my_exe, exe_size);
-		void (*my_main)() = (void (*)()) ((ULONGLONG)test_buf);
-		my_main();
+	if (!test_buf) {
+		peconv::free_file(my_exe);
+		system("pause");
+		return -2;
 	}
+	//copy file content into executable buffer:
+	memcpy(test_buf, my_exe, exe_size);
+
+	//run it:
+	void (*my_main)() = (void (*)()) ((ULONGLONG)test_buf);
+	my_main();
+	
+	peconv::free_aligned(test_buf, exe_size);
+	peconv::free_file(my_exe);
 	return 0; 
 }

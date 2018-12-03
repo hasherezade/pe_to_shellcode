@@ -14,5 +14,5 @@ set ( PECONV_LIB $<TARGET_FILE:libpeconv> CACHE FILE "PEConvLib library path" )
 
 # Add sub-directories
 #
-add_subdirectory ( pe_to_shellcode )
-add_subdirectory ( test_shc )
+add_subdirectory ( pe2shc )
+add_subdirectory ( runshc )

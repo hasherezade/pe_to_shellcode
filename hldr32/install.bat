@@ -1,1 +1,1 @@
-move stub32.bin ../pe_to_shellcode/
+move stub32.bin ../pe2shc/

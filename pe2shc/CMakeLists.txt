@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.8)
 
-project ( pe_to_shellcode )
+project ( pe2shc )
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 

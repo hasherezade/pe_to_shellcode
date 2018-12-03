@@ -88,7 +88,8 @@ std::string make_out_name(std::string input_file)
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cout << "PE to shellcode v." << VERSION << std::endl;
+		std::cout << "~ pe2shc v." << VERSION << " ~\n"
+			<< "Converts PE into shellcode.\n";
 		std::cout << "Args: <input_file> [output_file]" << std::endl;
 		system("pause");
 		return 0;
