@@ -62,8 +62,7 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 		return false;
 	}
 	if (peconv::get_subsystem(my_exe) != IMAGE_SUBSYSTEM_WINDOWS_GUI) {
-		std::cout << "Subsystem must be GUI!" << std::endl;
-		return false;
+		std::cout << "[WARNING] This is a console application! The recommended subsystem is GUI." << std::endl;
 	}
 	IMAGE_DATA_DIRECTORY* dotnet_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
 	if (dotnet_dir) {
