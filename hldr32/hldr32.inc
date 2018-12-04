@@ -1,3 +1,6 @@
+;HLDR (32 bit)
+;version 1.1
+
 CREATE_ALWAYS                   equ     2
 FILE_WRITE_DATA                 equ     2
 
@@ -24,7 +27,6 @@ struc    mapstk
 endstruc
 
 struc   krncrcstk
-.kVirtualAlloc:          resd 1
 .kLoadLibraryA:          resd 1
 .kGetProcAddress:        resd 1
 .kFlushInstructionCache: resd 1

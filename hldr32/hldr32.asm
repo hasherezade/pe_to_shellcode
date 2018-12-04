@@ -1,14 +1,26 @@
+;HLDR (32 bit)
+;version 1.1
+
 bits 32
 %include "hldr32.inc"
 
 ;-----------------------------------------------------------------------------
-;recover kernel32 image base
+;parse kernel32.dll export table
 ;-----------------------------------------------------------------------------
 
 hldr_begin:
-        pushad                           ;must save ebx/edi/esi/ebp
+        pushad
+        call    parse_exports
+        dd      0E9258E7Ah               ;FlushInstructionCache
+        dd      0C97C1FFFh               ;GetProcAddress
+        dd      03FC1BD8Dh               ;LoadLibraryA
+        dd      009CE0D4Ah               ;VirtualAlloc
+        db      0
+
+parse_exports:
         push    tebProcessEnvironmentBlock
         pop     eax
+        cdq
         fs mov  eax, dword [eax]
         mov     eax, dword [eax + pebLdr]
         mov     esi, dword [eax + ldrInLoadOrderModuleList]
@@ -16,28 +28,10 @@ hldr_begin:
         xchg    eax, esi
         lodsd
         mov     ebp, dword [eax + mlDllBase]
-        call    parse_exports
-
-;-----------------------------------------------------------------------------
-;API CRC table, null terminated
-;-----------------------------------------------------------------------------
-
-        dd      0E9258E7Ah               ;FlushInstructionCache
-        dd      0C97C1FFFh               ;GetProcAddress
-        dd      03FC1BD8Dh               ;LoadLibraryA
-        dd      009CE0D4Ah               ;VirtualAlloc
-        db      0
-
-;-----------------------------------------------------------------------------
-;parse export table
-;-----------------------------------------------------------------------------
-
-parse_exports:
-        pop     esi
         mov     ebx, ebp
         mov     eax, dword [ebp + lfanew]
-        add     ebx, dword [ebp + eax + IMAGE_DIRECTORY_ENTRY_EXPORT]
-        cdq
+        add     ebx, dword [eax + ebp + IMAGE_DIRECTORY_ENTRY_EXPORT]
+        pop     esi
 
 walk_names:
         mov     eax, ebp
@@ -87,15 +81,16 @@ crc_skip:
 ;allocate memory for mapping
 ;-----------------------------------------------------------------------------
 
+        pop     eax
         mov     esi, dword [esp + krncrcstk_size + 20h + 4]
-        mov     ebp, dword [esi + lfanew]
-        add     ebp, esi
+        mov     edx, dword [esi + lfanew]
+        lea     ebp, dword [esi + edx + 7fh]
         mov     ch, (MEM_COMMIT | MEM_RESERVE) >> 8
         push    PAGE_EXECUTE_READWRITE
         push    ecx
-        push    dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfImage]
+        push    dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfImage - 7fh]
         push    0
-        call    dword [esp + 10h + krncrcstk.kVirtualAlloc]
+        call    eax
         push    eax
         mov     ebx, esp
 
@@ -103,7 +98,7 @@ crc_skip:
 ;map MZ header, NT Header, FileHeader, OptionalHeader, all section headers...
 ;-----------------------------------------------------------------------------
 
-        mov     ecx, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfHeaders]
+        mov     ecx, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfHeaders - 7fh]
         mov     edi, eax
         push    esi
         rep     movsb
@@ -113,9 +108,9 @@ crc_skip:
 ;map sections data
 ;-----------------------------------------------------------------------------
 
-        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhSizeOfOptionalHeader]
-        lea     edx, dword [ebp + ecx + _IMAGE_NT_HEADERS.nthOptionalHeader]
-        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhNumberOfSections]
+        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhSizeOfOptionalHeader - 7fh]
+        lea     edx, dword [ebp + ecx + _IMAGE_NT_HEADERS.nthOptionalHeader - 7fh]
+        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhNumberOfSections - 7fh]
         xchg    edi, eax
 
 map_section:
@@ -129,12 +124,11 @@ map_section:
         loop    map_section
 
 ;-----------------------------------------------------------------------------
-;import DLL
+;parse import DLL
 ;-----------------------------------------------------------------------------
 
         pushad
-        mov     cl, IMAGE_DIRECTORY_ENTRY_IMPORT
-        mov     ebp, dword [ecx + ebp]  
+        mov     ebp, dword [ecx + ebp + IMAGE_DIRECTORY_ENTRY_IMPORT - 7fh]
         add     ebp, edi
 
 import_dll:
@@ -146,19 +140,18 @@ import_dll:
         xchg    ecx, eax
         mov     edi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idFirstThunk]
         mov     esi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idOriginalFirstThunk]
-        test esi, esi ;if OriginalFirstThunk is NULL... 
-        jne thunks_continue
-            mov esi, edi ; use FirstThunk instead of OriginalFirstThunk
-        thunks_continue:
+        test    esi, esi
+        cmove   esi, edi                 ;if OriginalFirstThunk is NULL, esi = edi = FirstThunk
         add     esi, dword [ebx]
         add     edi, dword [ebx]
+        add     ebp, _IMAGE_IMPORT_DESCRIPTOR_size
 
 import_thunks:
         lodsd
-        test    eax, eax
-        je      import_next
         btr     eax, 31
         jc      import_push
+        test    eax, eax
+        je      import_dll
         add     eax, dword [ebx]
         inc     eax
         inc     eax
@@ -172,30 +165,31 @@ import_push:
         stosd
         jmp     import_thunks
 
-import_next:
-        add     ebp, _IMAGE_IMPORT_DESCRIPTOR_size
-        jmp     import_dll
-
 import_popad:
         popad
 
 ;-----------------------------------------------------------------------------
-;apply relocations
+;push FlushInstructionCache(0xffffffff, 0, 0) at an earlier time
 ;-----------------------------------------------------------------------------
 
-        mov     cl, IMAGE_DIRECTORY_ENTRY_RELOCS
-        lea     edx, dword [ebp + ecx]   ;relocation entry in data directory
-        add     edi, dword [edx]
-        xor     ecx, ecx
+        push    ecx                      ;FlushInstructionCache
+        push    ecx                      ;FlushInstructionCache
+        dec     ecx                      ;FlushInstructionCache
+        push    ecx                      ;FlushInstructionCache
+        inc     ecx
+
+;-----------------------------------------------------------------------------
+;parse base relocation table
+;-----------------------------------------------------------------------------
+
+        add     edi, dword [ebp + IMAGE_DIRECTORY_ENTRY_RELOCS - 7fh]
 
 reloc_block:
-        pushad
-        mov     ecx, dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock]
-        sub     ecx, IMAGE_BASE_RELOCATION_size
-        cdq
+        push    IMAGE_BASE_RELOCATION_size
+        pop     edx
 
 reloc_addr:
-        movzx   eax, word [edi + edx + IMAGE_BASE_RELOCATION_size]
+        movzx   eax, word [edi + edx]
         push    eax
         and     ah, 0f0h
         cmp     ah, IMAGE_REL_BASED_HIGHLOW << 4
@@ -203,9 +197,9 @@ reloc_addr:
         jne     reloc_abs                ;another type not HIGHLOW
         and     ah, 0fh
         add     eax, dword [edi + IMAGE_BASE_RELOCATION.rePageRVA]
-        add     eax, dword [ebx]         ;new base address
+        add     eax, dword [ebx]         ;new base address        
         mov     esi, dword [eax]
-        sub     esi, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohImageBasex]
+        sub     esi, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohImageBasex - 7fh]
         add     esi, dword [ebx]
         mov     dword [eax], esi
         xor     eax, eax
@@ -215,49 +209,26 @@ reloc_abs:
         jne     hldr_exit                ;not supported relocation type
         inc     edx
         inc     edx
-        cmp     ecx, edx
+        cmp     dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock], edx
         jne     reloc_addr
-        popad
-        add     ecx, dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock]
-        add     edi, dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock]
-        cmp     dword [edx + 4], ecx
+        add     ecx, edx
+        add     edi, edx
+        cmp     dword [ebp + IMAGE_DIRECTORY_ENTRY_RELOCS + 4 - 7fh], ecx
         jne     reloc_block
 
 ;-----------------------------------------------------------------------------
 ;call entrypoint
-;
-;to a DLL main:
-;push 0
-;push 1
-;push dword [ebx]
-;mov  eax, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
-;add  eax, dword [ebx]
-;call eax
-;
-;to a RVA (an exported function's RVA, for example):
-;
-;mov  eax, 0xdeadf00d ; replace with addr
-;add  eax, dword [ebx]
-;call eax
 ;-----------------------------------------------------------------------------
 
-        xor     ecx, ecx
-        push    ecx
-        push    ecx
-        dec     ecx
-        push    ecx
         call    dword [ebx + mapstk_size + krncrcstk.kFlushInstructionCache]
-        mov     eax, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
+        mov     eax, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint - 7fh]
         add     eax, dword [ebx]
+        push    ebx
         call    eax
-
-;-----------------------------------------------------------------------------
-;if fails or returns from host, restore stack and registers and return (somewhere)
-;-----------------------------------------------------------------------------
+        pop     ebx
 
 hldr_exit:
         lea     esp, dword [ebx + mapstk_size + krncrcstk_size]
         popad
         ret     4 
 hldr_end:
-
