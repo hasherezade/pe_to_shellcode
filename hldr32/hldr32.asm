@@ -148,10 +148,8 @@ import_dll:
         xchg    ecx, eax
         mov     edi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idFirstThunk]
         mov     esi, dword [ebp + _IMAGE_IMPORT_DESCRIPTOR.idOriginalFirstThunk]
-        test esi, esi ;if OriginalFirstThunk is NULL... 
-        jne thunks_continue
-            mov esi, edi ; use FirstThunk instead of OriginalFirstThunk
-        thunks_continue:
+        test    esi, esi    ;if OriginalFirstThunk is NULL... 
+        cmove   esi, edi    ;use FirstThunk instead of OriginalFirstThunk
         add     esi, dword [ebx]
         add     edi, dword [ebx]
 
