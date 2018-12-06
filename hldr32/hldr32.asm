@@ -135,6 +135,8 @@ map_section:
         pushad
         mov     cl, IMAGE_DIRECTORY_ENTRY_IMPORT
         mov     ebp, dword [ecx + ebp]  
+        test    ebp, ebp    ;check if PE has import table
+        je import_popad     ;if import table not found, skip loading
         add     ebp, edi
 
 import_dll:
