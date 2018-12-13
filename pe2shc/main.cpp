@@ -4,16 +4,16 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "0.5"
+#define VERSION "0.6"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 {
 	BYTE redir_code[] = "\x4D\x5A"
 		"\xE8\x00\x00\x00\x00"
 		"\x5B" // pop ebx
-		"\x83\xEB\x07" // sub ebx,7
+		"\x48\x83\xEB\x07" // sub ebx,7
 		"\x53" // push ebx (Image Base)
-		"\x81\xC3" // add ebx,
+		"\x48\x81\xC3" // add ebx,
 		"\x59\x04\x00\x00" // value
 		"\xFF\xD3" // call ebx
 		"\xc3"; // ret
@@ -25,12 +25,13 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 	return true;
 }
 
-BYTE* shellcodify32(BYTE *my_exe, size_t exe_size, size_t &out_size)
+BYTE* shellcodify(BYTE *my_exe, size_t exe_size, size_t &out_size, bool is64b)
 {
 	out_size = 0;
 	size_t stub_size = 0;
-	BYTE *stub32 = peconv::load_resource_data(stub_size, STUB32);
-	if (!stub32) {
+	int res_id = is64b ? STUB64 : STUB32;
+	BYTE *stub = peconv::load_resource_data(stub_size, res_id);
+	if (!stub) {
 		std::cout << "Stub not loaded" << std::endl;
 		return nullptr;
 	}
@@ -40,7 +41,7 @@ BYTE* shellcodify32(BYTE *my_exe, size_t exe_size, size_t &out_size)
 		return nullptr;
 	}
 	memcpy(ext_buf, my_exe, exe_size);
-	memcpy(ext_buf + exe_size, stub32, stub_size);
+	memcpy(ext_buf + exe_size, stub, stub_size);
 
 	DWORD raw_addr = exe_size;
 	overwrite_hdr(ext_buf, ext_size, raw_addr);
@@ -52,11 +53,6 @@ BYTE* shellcodify32(BYTE *my_exe, size_t exe_size, size_t &out_size)
 bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 {
 	if (!my_exe) return false;
-	WORD arch = peconv::get_nt_hdr_architecture(my_exe);
-	if (arch != IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
-		std::cout << "Only PE 32bit is supported!" << std::endl;
-		return false;
-	}
 	if (!peconv::has_relocations(my_exe)) {
 		std::cout << "The PE must have relocations!" << std::endl;
 		return false;
@@ -89,7 +85,7 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2) {
 		std::cout << "~ pe2shc v." << VERSION << " ~\n"
-			<< "Converts PE into shellcode.\n";
+			<< "Converts PE into shellcode.\nFor 32 & 64 bit PEs.\n";
 		std::cout << "Args: <input_file> [output_file]" << std::endl;
 		system("pause");
 		return 0;
@@ -113,8 +109,9 @@ int main(int argc, char *argv[])
 		peconv::free_file(my_exe);
 		return -2;
 	}
+	bool is64b = peconv::is64bit(my_exe);
 	size_t ext_size = 0;
-	BYTE *ext_buf = shellcodify32(my_exe, exe_size, ext_size);
+	BYTE *ext_buf = shellcodify(my_exe, exe_size, ext_size, is64b);
 	if (!ext_buf) {
 		std::cout << "[-] Adding the stub failed!" << std::endl;
 		peconv::free_file(my_exe);
