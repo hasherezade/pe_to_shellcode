@@ -12,6 +12,7 @@ git clone --recursive https://github.com/hasherezade/pe_to_shellcode.git
 Latest builds*:
 -
 *those builds are available for testing and they may be ahead of the official release:
-+ [pe2shc32.exe](https://goo.gl/LfJaVZ) - PE to shellcode converter
-+ [runshc32.exe](https://goo.gl/xi3fzQ) - a utility to run/test shellcode (loads and deploys)
++ [pe2shc.exe](https://goo.gl/LfJaVZ) - PE to shellcode converter
++ [runshc32.exe](https://goo.gl/xi3fzQ) - a utility to run/test 32-bit shellcode (loads and deploys)
++ [runshc64.exe](https://goo.gl/TE4bhr) - a utility to run/test 64-bit shellcode (loads and deploys)
 <hr/>
