@@ -30,6 +30,7 @@ build_script:
       cmake .. -A x64 )
   - if [%env_arch%]==[x86] (
       cmake .. )
-  - cmake --build .
+  - cmake --build . --target install
+  - ctest -V
   - cd ..
   

@@ -28,3 +28,7 @@ target_link_libraries ( ${PROJECT_NAME} ${PECONV_LIB} )
 
 #dependencies:
 add_dependencies( ${PROJECT_NAME} libpeconv )
+
+if(PE2SHC_BUILD_TESTING)
+	INSTALL(TARGETS pe2shc DESTINATION ${CMAKE_BINARY_DIR} COMPONENT pe2shc)
+endif()

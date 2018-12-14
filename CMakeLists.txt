@@ -3,6 +3,8 @@ cmake_minimum_required ( VERSION 2.8 )
 # replace "peconv_project" by your own project name:
 project ( pe_to_shellcode )
 
+option (PE2SHC_BUILD_TESTING "enable testing" ON)
+
 # libs
 # modules:
 set ( M_PARSER "libpeconv/libpeconv" )
@@ -16,3 +18,9 @@ set ( PECONV_LIB $<TARGET_FILE:libpeconv> CACHE FILE "PEConvLib library path" )
 #
 add_subdirectory ( pe2shc )
 add_subdirectory ( runshc )
+
+# Setup testing
+if(PE2SHC_BUILD_TESTING)
+	enable_testing()
+	add_subdirectory ( tests )
+endif()
