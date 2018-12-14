@@ -22,7 +22,7 @@ set_tests_properties(RunPe2Shc PROPERTIES DEPENDS runshc)
 
 # 2) does conversion of the test application work
 add_test(ConvTestCase1 "${CMAKE_BINARY_DIR}//pe2shc.exe" "${CMAKE_BINARY_DIR}//test_case1.exe" "${CMAKE_BINARY_DIR}//test_case1.shc.exe")
-set_tests_properties(ConvTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "[+] Saved")
+set_tests_properties(ConvTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "Saved to file:")
 
 # 2) does converted application run properly
 add_test(RunTestCase1 "${CMAKE_BINARY_DIR}//runshc.exe" "${CMAKE_BINARY_DIR}//test_case1.shc.exe")
