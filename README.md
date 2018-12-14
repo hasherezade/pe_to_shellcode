@@ -11,6 +11,30 @@ Use recursive clone to get the repo together with all the submodules:
 <pre>
 git clone --recursive https://github.com/hasherezade/pe_to_shellcode.git
 </pre>
+
+How to use it:
+-
+1. Use pe2shc.exe to convert a PE of your choice:
+```
+pe2shc.exe <path to your PE> [output path*]
+* - optional
+```
+If the PE was successfuly converted, pe2shc will let you know where the output was saved:
+```
+[+] Saved to file: <converted file>
+```
+i.e.
+```
+[+] Saved to file: test_file.shc.exe
+```
+2. Use runshc.exe to run the output file and check if the conversion went fine:
+```
+runshc.exe <converted file>
+```
+3. If the file runs as the original PE, it confirms that the conversion was successful!<br/>
+Now you can use the converted PE just like you would use a shellcode: inject it to a target and execute from the beginning of the buffer. No additional PE loaders are required.<br/>
+At the same time, you can keep using the converted file as a regular PE.
+
 Latest builds*:
 -
 *those builds are available for testing and they may be ahead of the official release:
