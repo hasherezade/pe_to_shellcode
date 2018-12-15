@@ -4,14 +4,17 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "0.6"
+#define VERSION "0.7"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 {
-	BYTE redir_code[] = "\x4D\x5A"
-		"\xE8\x00\x00\x00\x00"
+	BYTE redir_code[] = "\x4D" //dec ebp
+		"\x5A" //pop edx
+		"\x45" //inc ebp
+		"\x52" //push edx
+		"\xE8\x00\x00\x00\x00" //call <next_line>
 		"\x5B" // pop ebx
-		"\x48\x83\xEB\x07" // sub ebx,7
+		"\x48\x83\xEB\x09" // sub ebx,9
 		"\x53" // push ebx (Image Base)
 		"\x48\x81\xC3" // add ebx,
 		"\x59\x04\x00\x00" // value
