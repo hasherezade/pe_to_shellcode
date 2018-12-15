@@ -21,18 +21,16 @@ int main(int argc, char *argv[])
 	size_t exe_size = 0;
 	char* in_path = argv[1];
 
-	std::cout << "Reading module from: " << in_path << std::endl;
+	std::cout << "[*] Reading module from: " << in_path << std::endl;
 	BYTE *my_exe = peconv::load_file(in_path, exe_size);
 	if (!my_exe) {
-		system("pause");
+		std::cout << "[-] Loading file failed" << std::endl;
 		return -1;
 	}
-
-	std::cout << "Test it!" << std::endl;
 	BYTE *test_buf = peconv::alloc_aligned(exe_size, PAGE_EXECUTE_READWRITE);
 	if (!test_buf) {
 		peconv::free_file(my_exe);
-		system("pause");
+		std::cout << "[-] Allocating buffer failed" << std::endl;
 		return -2;
 	}
 	//copy file content into executable buffer:
@@ -42,10 +40,12 @@ int main(int argc, char *argv[])
 	peconv::free_file(my_exe);
 	my_exe = nullptr;
 
+	std::cout << "[*] Running the shellcode:" << std::endl;
 	//run it:
 	int (*my_main)() = (int(*)()) ((ULONGLONG)test_buf);
 	int ret_val = my_main();
 	
 	peconv::free_aligned(test_buf, exe_size);
+	std::cout << "[+] The shellcode finished with a return value: " << std::hex << ret_val << std::endl;
 	return ret_val;
 }

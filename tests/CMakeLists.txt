@@ -16,7 +16,7 @@ set_tests_properties(RunPe2Shc PROPERTIES DEPENDS pe2shc)
 
 # 1) does runshc run
 add_test(RunRunShc "${CMAKE_BINARY_DIR}//runshc.exe" "${CMAKE_BINARY_DIR}//demo.shc.exe")
-set_tests_properties(RunRunShc PROPERTIES PASS_REGULAR_EXPRESSION "Test it")
+set_tests_properties(RunRunShc PROPERTIES PASS_REGULAR_EXPRESSION "Running the shellcode:")
 set_tests_properties(RunPe2Shc PROPERTIES DEPENDS pe2shc)
 set_tests_properties(RunPe2Shc PROPERTIES DEPENDS runshc)
 
