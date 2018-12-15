@@ -3,7 +3,7 @@ cmake_minimum_required ( VERSION 2.8 )
 # replace "peconv_project" by your own project name:
 project ( pe_to_shellcode )
 
-option (PE2SHC_BUILD_TESTING "enable testing" ON)
+option (PE2SHC_BUILD_TESTING "enable testing" OFF)
 
 # libs
 # modules:
