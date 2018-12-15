@@ -1,1 +1,1 @@
-stub32.bin: CC-BY hh86
+stub64.bin: CC-BY hh86
