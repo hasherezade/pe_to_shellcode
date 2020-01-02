@@ -41,11 +41,3 @@ runshc.exe <converted file>
 3. If the file runs as the original PE, it confirms that the conversion was successful!<br/>
 Now you can use the converted PE just like you would use a shellcode: inject it to a target and execute from the beginning of the buffer. No additional PE loaders are required.<br/>
 At the same time, you can keep using the converted file as a regular PE.
-
-Latest builds*:
--
-*those builds are available for testing and they may be ahead of the official release:
-+ [pe2shc.exe](https://goo.gl/LfJaVZ) - PE to shellcode converter
-+ [runshc32.exe](https://goo.gl/xi3fzQ) - a utility to run/test 32-bit shellcode (loads and deploys)
-+ [runshc64.exe](https://goo.gl/TE4bhr) - a utility to run/test 64-bit shellcode (loads and deploys)
-<hr/>
