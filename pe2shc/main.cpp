@@ -53,6 +53,33 @@ BYTE* shellcodify(BYTE *my_exe, size_t exe_size, size_t &out_size, bool is64b)
 	return ext_buf;
 }
 
+template <typename IMAGE_TLS_DIRECTORY>
+bool has_tls_callbacks(BYTE *my_exe, size_t exe_size)
+{
+	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
+	if (!tls_dir) return false;
+	
+	IMAGE_TLS_DIRECTORY* tls = peconv::get_type_directory<IMAGE_TLS_DIRECTORY>((HMODULE)my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
+	if (!tls) return false;
+
+	ULONGLONG base = peconv::get_image_base(my_exe);
+	ULONGLONG callback_rva = tls->AddressOfCallBacks;
+	if (callback_rva > base) {
+		callback_rva -= base;
+	}
+	if (!peconv::validate_ptr(my_exe, exe_size, my_exe + callback_rva, sizeof(ULONGLONG))) {
+		return false;
+	}
+	ULONGLONG *callback_addr = (ULONGLONG *)(my_exe + callback_rva);
+	if (callback_addr == 0) {
+		return false;
+	}
+	if (*callback_addr == 0) {
+		return false;
+	}
+	return true;
+}
+
 bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 {
 	if (!my_exe) return false;
@@ -70,7 +97,40 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 	}
 	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
 	if (tls_dir) {
-		std::cout << "[WARNING] This application may have TLS callbacks, which are not supported!" << std::endl;
+		bool has_callback = false;
+		if (!peconv::is64bit(my_exe)) {
+			if (has_tls_callbacks<IMAGE_TLS_DIRECTORY32>(my_exe, exe_size)) {
+				has_callback = true;
+			}
+		}
+		else {
+			if (has_tls_callbacks<IMAGE_TLS_DIRECTORY64>(my_exe, exe_size)) {
+				has_callback = true;
+			}
+		}
+		if (has_callback) {
+			std::cout << "[WARNING] This application has TLS callbacks, which are not supported!" << std::endl;
+		}
+	}
+	return true;
+}
+
+bool is_supported_pe(const std::string &in_path)
+{
+	std::cout << "Reading module from: " << in_path << std::endl;
+	size_t exe_size = 0;
+	BYTE *my_exe = peconv::load_pe_module(in_path.c_str(), exe_size, false, false);
+	if (!my_exe) {
+		std::cout << "[-] Could not read the input file!" << std::endl;
+		return false;
+	}
+
+	bool is_ok = is_supported_pe(my_exe, exe_size);
+	peconv::free_pe_buffer(my_exe);
+
+	if (!is_ok) {
+		std::cout << "[-] Not supported input file!" << std::endl;
+		return false;
 	}
 	return true;
 }
@@ -93,24 +153,23 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	size_t exe_size = 0;
 	std::string in_path = argv[1];
 	std::string  out_str = make_out_name(in_path);
 	if (argc > 2) {
 		out_str = argv[2];
 	}
 
-	std::cout << "Reading module from: " << in_path << std::endl;
+	if (!is_supported_pe(in_path)) {
+		return -2;
+	}
+
+	size_t exe_size = 0;
 	BYTE *my_exe = peconv::load_file(in_path.c_str(), exe_size);
 	if (!my_exe) {
 		std::cout << "[-] Could not read the input file!" << std::endl;
 		return -1;
 	}
-	if (!is_supported_pe(my_exe, exe_size)) {
-		std::cout << "[-] Not supported input file!" << std::endl;
-		peconv::free_file(my_exe);
-		return -2;
-	}
+
 	bool is64b = peconv::is64bit(my_exe);
 	size_t ext_size = 0;
 	BYTE *ext_buf = shellcodify(my_exe, exe_size, ext_size, is64b);
