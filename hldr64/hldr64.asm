@@ -229,12 +229,13 @@ reloc_abs:
         inc     edx
         inc     edx
         cmp     dword [rdi + IMAGE_BASE_RELOCATION.reSizeOfBlock], edx
-        jne     reloc_addr
+        jg     reloc_addr
         add     ecx, edx
         add     rdi, rdx
         cmp     dword [rbp + IMAGE_DIRECTORY_ENTRY_RELOCS + 4], ecx
-        jne     reloc_block
+        jg     reloc_block
 
+reloc_finished:
 ;-----------------------------------------------------------------------------
 ;call entrypoint
 ;-----------------------------------------------------------------------------
@@ -260,4 +261,4 @@ hldr_exit:
         pop     rsi
         pop     rbx
         ret     4
-hldr64_end:
+
