@@ -260,5 +260,5 @@ hldr_exit:
         pop     rdi
         pop     rsi
         pop     rbx
-        ret     4
+        ret     8
 
