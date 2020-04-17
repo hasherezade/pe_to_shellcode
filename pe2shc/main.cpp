@@ -70,8 +70,7 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 	}
 	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
 	if (tls_dir) {
-		std::cout << "[-] Applications with TLS callbacks are not supported!" << std::endl;
-		return false;
+		std::cout << "[WARNING] This application may have TLS callbacks, which are not supported!" << std::endl;
 	}
 	return true;
 }
