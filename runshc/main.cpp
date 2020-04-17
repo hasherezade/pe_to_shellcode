@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <iostream>
 
-#include "peconv.h"
+#include <peconv.h>
 
 int main(int argc, char *argv[])
 {
