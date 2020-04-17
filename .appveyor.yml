@@ -37,8 +37,7 @@ before_build:
 build_script:
   - cmake --build . --config %CONFIGURATION% --target install 
   - ctest -V
-  - cd ..
-  
+
 after_build:
   - mkdir %artifactName%
   - cp %APPVEYOR_BUILD_FOLDER%/%APPVEYOR_REPO_COMMIT%/* %artifactName%
