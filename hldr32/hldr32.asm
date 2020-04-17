@@ -216,12 +216,12 @@ reloc_abs:
         inc     edx
         inc     edx
         cmp     ecx, edx
-        jne     reloc_addr
+        jg     reloc_addr
         popad
         add     ecx, dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock]
         add     edi, dword [edi + IMAGE_BASE_RELOCATION.reSizeOfBlock]
         cmp     dword [edx + 4], ecx
-        jne     reloc_block
+        jg     reloc_block
 
 ;-----------------------------------------------------------------------------
 ;call entrypoint
