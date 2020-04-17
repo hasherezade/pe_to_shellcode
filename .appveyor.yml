@@ -14,23 +14,27 @@ install:
 
 build:
   verbosity: detailed
-
+  
 configuration:
+  - Release
   - Debug
   
 environment:
   matrix:
     - env_arch: "x64"
     - env_arch: "x86"
-
-build_script:
+    
+before_build:
   - mkdir build
   - cd build
   - if [%env_arch%]==[x64] (
       cmake .. -A x64 -DPE2SHC_BUILD_TESTING=ON )
   - if [%env_arch%]==[x86] (
       cmake .. -DPE2SHC_BUILD_TESTING=ON )
-  - cmake --build . --target install
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=%APPVEYOR_BUILD_FOLDER% ..
+  
+build_script:
+  - cmake --build . --config %CONFIGURATION% --target install 
   - ctest -V
   - cd ..
   
