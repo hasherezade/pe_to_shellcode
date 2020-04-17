@@ -41,6 +41,7 @@ build_script:
 after_build:
   - mkdir %artifactName%
   - cp %APPVEYOR_BUILD_FOLDER%/%APPVEYOR_REPO_COMMIT%/* %artifactName%
+  - del %artifactName%/*.shc.exe
 
 artifacts:
   - path: build\%artifactName%
