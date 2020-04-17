@@ -25,6 +25,6 @@ add_test(ConvTestCase1 "${CMAKE_INSTALL_PREFIX}//pe2shc.exe" "${CMAKE_INSTALL_PR
 set_tests_properties(ConvTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "Saved as:")
 
 # 3) does converted application run properly
-add_test(RunTestCase1 "{CMAKE_INSTALL_PREFIX}//runshc.exe" "${CMAKE_INSTALL_PREFIX}//test_case1.shc.exe")
+add_test(RunTestCase1 "${CMAKE_INSTALL_PREFIX}//runshc.exe" "${CMAKE_INSTALL_PREFIX}//test_case1.shc.exe")
 set_tests_properties(RunTestCase1 PROPERTIES DEPENDS test_case1)
 set_tests_properties(RunTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "Test passed!")
