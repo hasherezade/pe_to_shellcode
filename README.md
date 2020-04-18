@@ -26,7 +26,7 @@ How to use it:
 pe2shc.exe <path to your PE> [output path*]
 * - optional
 ```
-If the PE was successfuly converted, pe2shc will let you know where the output was saved:
+If the PE was successfuly converted, **pe2shc** will let you know where the output was saved:
 ```
 [+] Saved to file: <converted file>
 ```
@@ -39,7 +39,7 @@ i.e.
 runshc.exe <converted file>
 ```
 
-(*)Warning: remember to use the version of `runshc` with a bitness appropriate to your converted application (32 or 64 bit) - otherwise the application will crash!
+(*)Warning: remember to use the version of **runshc** with a bitness appropriate to your converted application (32 or 64 bit) - otherwise the application will crash!
 
 3. If the file runs as the original PE, it confirms that the conversion was successful!<br/>
 Now you can use the converted PE just like you would use a shellcode: inject it to a target and execute from the beginning of the buffer. No additional PE loaders are required.<br/>
