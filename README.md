@@ -7,6 +7,8 @@ Converts PE so that it can be then injected just like a normal shellcode.<br/>
 (At the same time, the output file remains to be a valid PE).<br/>
 <b>Supports both 32 and 64 bit PEs</b>
 
+*Authors: [@hasherezade](https://github.com/hasherezade) & [@hh86](https://github.com/86hh)*
+
 Objective:
 -
 The goal of this project is to provide a possibility to generate PE files that can be injected with minimal effort.
