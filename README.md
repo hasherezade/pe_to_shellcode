@@ -9,19 +9,23 @@ Converts PE so that it can be then injected just like a normal shellcode.<br/>
 
 *Authors: [@hasherezade](https://github.com/hasherezade) & [@hh86](https://github.com/86hh)*
 
-Objective:
+Objective
 -
 The goal of this project is to provide a possibility to generate PE files that can be injected with minimal effort.
 It is inspired by Stephen Fewer's [ReflectiveDLLInjection](https://github.com/stephenfewer/ReflectiveDLLInjection) - but the difference is that with pe2shc you can add the reflective loading stub post-compilation. Also, the header of the PE file is modified in such a way, that you can start executing the injected buffer from the very beginning - just like you would do with a shellcode. It will automatically find the stub, and continue loading the full PE.
 
-Clone:
+Builds
+-
+Download the latest [release](https://github.com/hasherezade/pe_to_shellcode/releases).
+
+Clone
 -
 Use recursive clone to get the repo together with all the submodules:
 <pre>
 git clone --recursive https://github.com/hasherezade/pe_to_shellcode.git
 </pre>
 
-How to use it:
+How to use it
 -
 1. Use **pe2shc.exe** to convert a PE of your choice:
 ```
