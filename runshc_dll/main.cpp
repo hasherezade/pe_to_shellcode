@@ -68,15 +68,21 @@ std::string Find_exename() {
 		return 0;
 	}
 	size_t last_arg = nArgs - 1;
+	if (last_arg == 0) {
+		// the first argument is the original EXE, so skip it
+		std::cerr << "Missing argument: <shellcode module>\n";
+		return "";
+	}
 	std::wstring ws = szArglist[last_arg];
 	const std::string load_name(ws.begin(), ws.end());
-
 	return load_name;
 }
 
 int Load_ShellCode() {
 	string load_name = Find_exename();
-
+	if (load_name.length() == 0) {
+		return -1;
+	}
 	char* in_path = (char*)load_name.data();
 #ifdef INFO
 	MessageBoxA(0, in_path, "Found", MB_OK);
