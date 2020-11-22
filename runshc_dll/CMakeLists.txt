@@ -12,7 +12,7 @@ set (srcs
 #put your sources here
 )
 
-add_library ( ${PROJECT_NAME} SHARED ${hdrs} ${srcs} ${rsrc} main.cpp )
+add_library ( ${PROJECT_NAME} SHARED ${hdrs} ${srcs} ${rsrc} main.cpp main.def )
 
 # link with libpeconv.lib
 target_link_libraries ( ${PROJECT_NAME} ${PECONV_LIB} )

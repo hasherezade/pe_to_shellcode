@@ -1,11 +1,10 @@
 /*
-	author: https://github.com/july0426
+	based on the code by: july0426 (https://github.com/july0426)
+	modified by: hasherezade (https://github.com/hasherezade)
 */
 
 //#include "pch.h"
-#include <stdio.h>
 #include <fcntl.h>
-#include <io.h>
 
 #include <iostream>
 #include <cstdio>
@@ -21,9 +20,12 @@
 #include <io.h>
 #include<vector>
 #include <direct.h>
-#define MAX_PATH 280
 
 using namespace std;
+
+//#define INFO //pop up message boxes
+
+#define MY_API __declspec(dllexport)  __cdecl
 
 void getFiles(string path, string path2, vector<string>& files)
 {
@@ -34,7 +36,6 @@ void getFiles(string path, string path2, vector<string>& files)
 	{
 		do
 		{
-
 			if ((fileinfo.attrib &  _A_SUBDIR))
 			{
 				if (strcmp(fileinfo.name, ".") != 0 && strcmp(fileinfo.name, "..") != 0)
@@ -54,66 +55,32 @@ std::string Find_exename() {
 	LPTSTR pCommandLine;
 
 	pCommandLine = GetCommandLine();
-	_tprintf(L"%s\n", pCommandLine);
-	CString sChar = CString(pCommandLine);
-	USES_CONVERSION;
-	std::string exe_name1 = std::string(T2A(sChar));
-
-	std::string cmd = exe_name1.substr(0, exe_name1.find(".exe") + 4);
-	cout << cmd << endl;
-
-	string exe_name = cmd.substr(cmd.find_last_of("\\") + 1);
-
-	//cout << exe_name << endl;
-
-
-	char   buffer[MAX_PATH];
-	_getcwd(buffer, MAX_PATH);
-	cout << buffer << endl;
-
-	CString filePath;
-	GetModuleFileName(NULL, filePath.GetBufferSetLength(MAX_PATH + 1), MAX_PATH);
-	filePath.ReleaseBuffer();
-	int pos = filePath.ReverseFind('\\');
-	filePath = filePath.Left(pos);
-
-	string filePath2;
-	filePath2 = CT2A(filePath.GetString());
-	vector<string> files;
-	filePath2.assign(buffer).append("\\");
-
-
-	getFiles(filePath2, "", files);
-	int size = files.size();
-	//cout << size << endl;
-	string load_name = "";
-	for (int i = 0; i < size; i++)
+#ifdef INFO
+	MessageBox(0, pCommandLine, L"Commandline", MB_OK);
+#endif
+	int nArgs;
+	LPWSTR *szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+	if (!szArglist)
 	{
-		//cout << files[i].c_str() << endl;
-		string filename = files[i].c_str();
-		//cout << filename.length() << endl;
-		//cout << filename.find_last_of(".dll") << endl;
-		if (filename.length() - filename.find_last_of(".dll") == 1) {
-			continue;
-		};
-		if (filename == exe_name) {
-			continue;
-		};
-		if (filename.length() - filename.find_last_of(".exe") == 1) {
-			load_name = filename;
-			break;
-		};
-
-
+#ifdef INFO
+		MessageBoxW(0, L"CommandLineToArgvW failed\n", L"Commandline", MB_OK);
+#endif
+		return 0;
 	}
+	size_t last_arg = nArgs - 1;
+	std::wstring ws = szArglist[last_arg];
+	const std::string load_name(ws.begin(), ws.end());
+
 	return load_name;
 }
 
 int Load_ShellCode() {
-	//string load_name = "mishc.exe";
 	string load_name = Find_exename();
-	char* in_path = (char*)load_name.data();
 
+	char* in_path = (char*)load_name.data();
+#ifdef INFO
+	MessageBoxA(0, in_path, "Found", MB_OK);
+#endif
 	std::cout << "[*] Reading module from: " << in_path << std::endl;
 
 	size_t exe_size = 0;
@@ -134,7 +101,9 @@ int Load_ShellCode() {
 	//free the original buffer:
 	peconv::free_file(my_exe);
 	my_exe = nullptr;
-
+#ifdef INFO
+	MessageBoxW(0, L"[*] Running the shellcode:", L"OK", MB_OK);
+#endif
 	std::cout << "[*] Running the shellcode:" << std::endl;
 	//run it:
 	int(*my_main)() = (int(*)()) ((ULONGLONG)test_buf);
@@ -145,6 +114,11 @@ int Load_ShellCode() {
 	return ret_val;
 }
 
+void MY_API run(void)
+{
+	Load_ShellCode();
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule,
 	DWORD  ul_reason_for_call,
 	LPVOID lpReserved
@@ -153,8 +127,6 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
-		Load_ShellCode();
-		return TRUE;
 	case DLL_THREAD_ATTACH:
 	case DLL_THREAD_DETACH:
 	case DLL_PROCESS_DETACH:
