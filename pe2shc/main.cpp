@@ -58,7 +58,7 @@ bool has_tls_callbacks(BYTE *my_exe, size_t exe_size)
 {
 	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
 	if (!tls_dir) return false;
-	
+
 	IMAGE_TLS_DIRECTORY* tls = peconv::get_type_directory<IMAGE_TLS_DIRECTORY>((HMODULE)my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
 	if (!tls) return false;
 
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 	}
 
 	size_t exe_size = 0;
-	BYTE *my_exe = peconv::load_file(in_path.c_str(), exe_size);
+	BYTE *my_exe = peconv::load_pe_module(in_path.c_str(), exe_size, false, false);
 	if (!my_exe) {
 		std::cout << "[-] Could not read the input file!" << std::endl;
 		return -1;
@@ -178,7 +178,10 @@ int main(int argc, char *argv[])
 		peconv::free_file(my_exe);
 		return -3;
 	}
-	if (peconv::dump_to_file(out_str.c_str(), ext_buf, ext_size)) {
+	// remap pe to raw == virtual, so that remapping on load will not be required
+	peconv::t_pe_dump_mode dump_mode = peconv::PE_DUMP_REALIGN;
+	ULONGLONG current_base = peconv::get_image_base(ext_buf);
+	if (peconv::dump_pe(out_str.c_str(), ext_buf, ext_size, current_base, dump_mode)) {
 		std::cout << "[+] Saved as: " << out_str << std::endl;
 	}
 	else {
@@ -186,5 +189,5 @@ int main(int argc, char *argv[])
 	}
 	peconv::free_file(my_exe);
 	peconv::free_aligned(ext_buf);
-	return 0; 
+	return 0;
 }
