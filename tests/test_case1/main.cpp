@@ -17,6 +17,7 @@ int main()
     if (get_date() == 1337) {
         std::cout << "Test passed!\n";
     }
+    MessageBoxW(0, L"Hello World!", L"Demo!", MB_OK);
     std::cout << "Test Case 1 finished\n";
     return 0;
 }
