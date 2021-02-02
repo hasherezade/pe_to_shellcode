@@ -22,10 +22,8 @@ hldr_begin:
 ;API CRC table, null terminated
 ;-----------------------------------------------------------------------------
 
-        dd      0E9258E7Ah               ;FlushInstructionCache
         dd      0C97C1FFFh               ;GetProcAddress
         dd      03FC1BD8Dh               ;LoadLibraryA
-        dd      009CE0D4Ah               ;VirtualAlloc
         db      0
 
 ;-----------------------------------------------------------------------------
@@ -84,49 +82,16 @@ crc_skip:
         jnz     walk_names
 
 ;-----------------------------------------------------------------------------
-;allocate memory for mapping
+;save the pointers to the PE structure
 ;-----------------------------------------------------------------------------
 
         mov     esi, dword [esp + krncrcstk_size + 20h + 4]
         mov     ebp, dword [esi + lfanew]
         add     ebp, esi
-        mov     ch, (MEM_COMMIT | MEM_RESERVE) >> 8
-        push    PAGE_EXECUTE_READWRITE
-        push    ecx
-        push    dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfImage]
-        push    0
-        call    dword [esp + 10h + krncrcstk.kVirtualAlloc]
-        push    eax
-        mov     ebx, esp
 
-;-----------------------------------------------------------------------------
-;map MZ header, NT Header, FileHeader, OptionalHeader, all section headers...
-;-----------------------------------------------------------------------------
-
-        mov     ecx, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfHeaders]
-        mov     edi, eax
         push    esi
-        rep     movsb
-        pop     esi
-
-;-----------------------------------------------------------------------------
-;map sections data
-;-----------------------------------------------------------------------------
-
-        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhSizeOfOptionalHeader]
-        lea     edx, dword [ebp + ecx + _IMAGE_NT_HEADERS.nthOptionalHeader]
-        mov     cx, word [ebp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhNumberOfSections]
-        xchg    edi, eax
-
-map_section:
-        pushad
-        add     esi, dword [edx + _IMAGE_SECTION_HEADER.shPointerToRawData]
-        add     edi, dword [edx + _IMAGE_SECTION_HEADER.shVirtualAddress]
-        mov     ecx, dword [edx + _IMAGE_SECTION_HEADER.shSizeOfRawData]
-        rep     movsb
-        popad
-        add     edx, _IMAGE_SECTION_HEADER_size
-        loop    map_section
+        mov     ebx, esp
+        mov     edi, esi
 
 ;-----------------------------------------------------------------------------
 ;import DLL
@@ -242,11 +207,6 @@ reloc_abs:
 ;-----------------------------------------------------------------------------
 
         xor     ecx, ecx
-        push    ecx
-        push    ecx
-        dec     ecx
-        push    ecx
-        call    dword [ebx + mapstk_size + krncrcstk.kFlushInstructionCache]
         mov     eax, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
         add     eax, dword [ebx]
         call    eax

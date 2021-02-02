@@ -5,6 +5,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 
 #add the application that will be used for tests:
 add_subdirectory ( test_case1 )
+add_subdirectory ( dpc_test )
+add_subdirectory ( injector )
 
 enable_testing()
 

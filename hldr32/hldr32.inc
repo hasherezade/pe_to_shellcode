@@ -24,10 +24,8 @@ struc    mapstk
 endstruc
 
 struc   krncrcstk
-.kVirtualAlloc:          resd 1
 .kLoadLibraryA:          resd 1
 .kGetProcAddress:        resd 1
-.kFlushInstructionCache: resd 1
 endstruc
 
 struc _IMAGE_FILE_HEADER

@@ -29,10 +29,9 @@ regstksize      equ     30h
         lodsq
         mov     rbp, qword [rax + mDllBase]
         call    parse_exports
-        dd      0E9258E7Ah               ;FlushInstructionCache
+
         dd      0C97C1FFFh               ;GetProcAddress
         dd      03FC1BD8Dh               ;LoadLibraryA
-        dd      009CE0D4Ah               ;VirtualAlloc
         db      0
 
 ;-----------------------------------------------------------------------------
@@ -104,51 +103,15 @@ crc_skip:
         and     rsp, -10h                ;align on 16-byte boundary
 
 ;-----------------------------------------------------------------------------
-;allocate memory for mapping
+;save the pointers to the PE structure
 ;-----------------------------------------------------------------------------
 
         mov     rsi, qword [rbx + mapstk_size + krncrcstk_size + regstksize + 8]
         mov     ebp, dword [rsi + lfanew]
         add     rbp, rsi
-        push    PAGE_EXECUTE_READWRITE
-        pop     r9
-        mov     r8d, MEM_COMMIT | MEM_RESERVE
-        mov     edx, dword [rbp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfImage]
-        call    qword [rbx + mapstk_size + krncrcstk.kVirtualAlloc]
-        mov     qword [rbx], rax
-
-;-----------------------------------------------------------------------------
-;map MZ header, NT Header, FileHeader, OptionalHeader, all section headers...
-;-----------------------------------------------------------------------------
-
-        mov     ecx, dword [rbp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohSizeOfHeaders]
-        push    rax
-        pop     rdi
-        push    rsi
-        rep     movsb
-        pop     rsi
-
-;-----------------------------------------------------------------------------
-;map sections data
-;-----------------------------------------------------------------------------
-
-        mov     cx, word [rbp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhSizeOfOptionalHeader]
-        lea     rdx, qword [rbp + rcx + _IMAGE_NT_HEADERS.nthOptionalHeader]
-        mov     cx, word [rbp + _IMAGE_NT_HEADERS.nthFileHeader + _IMAGE_FILE_HEADER.fhNumberOfSections]
-
-map_section:
-        push    rcx
-        push    rsi
-        mov     ecx, dword [rdx + _IMAGE_SECTION_HEADER.shPointerToRawData]
-        add     rsi, rcx 
-        mov     edi, dword [rdx + _IMAGE_SECTION_HEADER.shVirtualAddress]
-        add     rdi, rax
-        mov     ecx, dword [rdx + _IMAGE_SECTION_HEADER.shSizeOfRawData]
-        rep     movsb
-        pop     rsi
-        pop     rcx
-        add     rdx, _IMAGE_SECTION_HEADER_size
-        loop    map_section
+        mov     rax, rsi
+        mov     qword [rbx], rsi
+        mov     rdi, rsi
 
 ;-----------------------------------------------------------------------------
 ;import DLL
@@ -239,11 +202,6 @@ reloc_finished:
 ;-----------------------------------------------------------------------------
 ;call entrypoint
 ;-----------------------------------------------------------------------------
-
-        xor     r8, r8
-        xor     edx, edx
-        or      ecx, -1
-        call    qword [rbx + mapstk_size + krncrcstk.kFlushInstructionCache]
         mov     eax, dword [rbp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
         add     rax, qword [rbx]
         call    rax
