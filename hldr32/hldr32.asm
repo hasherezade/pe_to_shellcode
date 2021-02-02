@@ -209,11 +209,6 @@ reloc_abs:
 ;-----------------------------------------------------------------------------
 
         xor     ecx, ecx
-        push    ecx
-        push    ecx
-        dec     ecx
-        push    ecx
-        call    dword [ebx + mapstk_size + krncrcstk.kFlushInstructionCache]
         mov     eax, dword [ebp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
         add     eax, dword [ebx]
         call    eax
