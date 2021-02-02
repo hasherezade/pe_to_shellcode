@@ -22,10 +22,8 @@ hldr_begin:
 ;API CRC table, null terminated
 ;-----------------------------------------------------------------------------
 
-        dd      0E9258E7Ah               ;FlushInstructionCache
         dd      0C97C1FFFh               ;GetProcAddress
         dd      03FC1BD8Dh               ;LoadLibraryA
-        dd      009CE0D4Ah               ;VirtualAlloc
         db      0
 
 ;-----------------------------------------------------------------------------

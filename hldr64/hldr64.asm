@@ -29,10 +29,9 @@ regstksize      equ     30h
         lodsq
         mov     rbp, qword [rax + mDllBase]
         call    parse_exports
-        dd      0E9258E7Ah               ;FlushInstructionCache
+
         dd      0C97C1FFFh               ;GetProcAddress
         dd      03FC1BD8Dh               ;LoadLibraryA
-        dd      009CE0D4Ah               ;VirtualAlloc
         db      0
 
 ;-----------------------------------------------------------------------------
@@ -203,7 +202,6 @@ reloc_finished:
 ;-----------------------------------------------------------------------------
 ;call entrypoint
 ;-----------------------------------------------------------------------------
-
         mov     eax, dword [rbp + _IMAGE_NT_HEADERS.nthOptionalHeader + _IMAGE_OPTIONAL_HEADER.ohAddressOfEntryPoint]
         add     rax, qword [rbx]
         call    rax
