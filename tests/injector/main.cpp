@@ -5,7 +5,17 @@
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		std::cout << "Args: <shellcode> <target pid>\n";
+		std::cout << "~ injector "
+#ifdef _WIN64
+			<< "(64-bit)"
+#else
+			<< "(32-bit)"
+#endif
+			<< " ~\n"
+			<< "Loads shellcode from a file, and injects it into a process with a given PID.\n";
+
+		std::cout << "Args: <shellcode_file> <target_PID>" << std::endl;
+		system("pause");
 		return 0;
 	}
 
