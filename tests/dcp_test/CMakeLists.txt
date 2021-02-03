@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-project (dpc_test)
+project (dcp_test)
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 
