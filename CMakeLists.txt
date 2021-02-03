@@ -18,6 +18,7 @@ set ( PECONV_LIB $<TARGET_FILE:libpeconv> CACHE FILE "PEConvLib library path" )
 #
 add_subdirectory ( pe2shc )
 add_subdirectory ( runshc )
+add_subdirectory ( injector )
 
 # Setup testing
 if(PE2SHC_BUILD_TESTING)
