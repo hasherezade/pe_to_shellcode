@@ -22,9 +22,10 @@ Download the latest [release](https://github.com/hasherezade/pe_to_shellcode/rel
 Clone
 -
 Use recursive clone to get the repo together with all the submodules:
-<pre>
+
+```console
 git clone --recursive https://github.com/hasherezade/pe_to_shellcode.git
-</pre>
+```
 
 How to use it
 -
