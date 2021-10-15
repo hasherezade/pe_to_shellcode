@@ -17,7 +17,7 @@ It is inspired by Stephen Fewer's [ReflectiveDLLInjection](https://github.com/st
 
 Builds
 -
-Download the latest [release](https://github.com/hasherezade/pe_to_shellcode/releases).
+📦 ⚙️ Download the latest [release](https://github.com/hasherezade/pe_to_shellcode/releases).
 
 Clone
 -
