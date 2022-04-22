@@ -1,5 +1,5 @@
 #include <iostream>
-#include <Windows.h>
+#include <windows.h>
 #include "util.h"
 
 int main(int argc, char *argv[])
