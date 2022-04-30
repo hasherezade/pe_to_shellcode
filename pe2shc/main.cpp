@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	else {
 		std::cout << "[-] Failed to save the output!" << std::endl;
 	}
-	peconv::free_file(my_exe);
+	peconv::free_pe_buffer(my_exe);
 	peconv::free_aligned(ext_buf);
 	return 0;
 }
