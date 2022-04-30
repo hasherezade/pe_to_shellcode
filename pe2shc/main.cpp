@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
 	BYTE *ext_buf = shellcodify(my_exe, exe_size, ext_size, is64b);
 	if (!ext_buf) {
 		std::cout << "[-] Adding the stub failed!" << std::endl;
-		peconv::free_file(my_exe);
+		peconv::free_pe_buffer(my_exe);
 		return -3;
 	}
 	// remap pe to raw == virtual, so that remapping on load will not be required
