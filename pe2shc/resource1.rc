@@ -50,7 +50,7 @@ END
 // RCDATA
 //
 
-STUB32             RCDATA                  "stub32.bin"
-STUB64             RCDATA                  "stub64.bin"
+STUB32             RCDATA                  "stub1\stub32.bin"
+STUB64             RCDATA                  "stub1\stub64.bin"
 #endif
 /////////////////////////////////////////////////////////////////////////////

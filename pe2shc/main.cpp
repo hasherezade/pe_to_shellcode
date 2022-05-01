@@ -4,11 +4,15 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "0.9"
+#define VERSION "1.0-rc2"
 
-bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
+bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
-	BYTE redir_code[] = "\x4D" //dec ebp
+	size_t value_pos = 8;
+	size_t redir_size = 0;
+	BYTE* redir_code = nullptr;
+
+	BYTE redir_code32[] = "\x4D" //dec ebp
 		"\x5A" //pop edx
 		"\x45" //inc ebp
 		"\x52" //push edx
@@ -21,10 +25,30 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 		"\xFF\xD3" // call ebx
 		"\xc3"; // ret
 
-	size_t offset = sizeof(redir_code) - 8;
+	BYTE redir_code64[] = "\x4D\x5A" //pop r10
+		"\x45\x52" //push r10
+		"\xE8\x00\x00\x00\x00" //call <next_line>
+		"\x59" // pop rcx
+		"\x48\x83\xE9\x09" // sub rcx,9 (rcx -> Image Base)
+		"\x48\x8B\xD9" // mov rbx,rcx 
+		"\x48\x81\xC3" // add ebx,
+		"\x59\x04\x00\x00" // value
+		"\xFF\xD3" // call ebx
+		"\xc3"; // ret
 
+	if (is64b) {
+		redir_code = redir_code64;
+		redir_size = sizeof(redir_code64);
+	}
+	else {
+		redir_code = redir_code32;
+		redir_size = sizeof(redir_code32);
+	}
+	if (!redir_code) return false;
+
+	size_t offset = redir_size - value_pos;
 	memcpy(redir_code + offset, &raw, sizeof(DWORD));
-	memcpy(my_exe, redir_code, sizeof(redir_code));
+	memcpy(my_exe, redir_code, redir_size);
 	return true;
 }
 
@@ -35,7 +59,7 @@ BYTE* shellcodify(BYTE *my_exe, size_t exe_size, size_t &out_size, bool is64b)
 	int res_id = is64b ? STUB64 : STUB32;
 	BYTE *stub = peconv::load_resource_data(stub_size, res_id);
 	if (!stub) {
-		std::cout << "[-] Stub not loaded" << std::endl;
+		std::cerr << "[ERROR] Stub not loaded" << std::endl;
 		return nullptr;
 	}
 	size_t ext_size = exe_size + stub_size;
@@ -47,7 +71,7 @@ BYTE* shellcodify(BYTE *my_exe, size_t exe_size, size_t &out_size, bool is64b)
 	memcpy(ext_buf + exe_size, stub, stub_size);
 
 	DWORD raw_addr = exe_size;
-	overwrite_hdr(ext_buf, ext_size, raw_addr);
+	overwrite_hdr(ext_buf, ext_size, raw_addr, is64b);
 
 	out_size = ext_size;
 	return ext_buf;
@@ -84,15 +108,15 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 {
 	if (!my_exe) return false;
 	if (!peconv::has_relocations(my_exe)) {
-		std::cout << "[-] The PE must have relocations!" << std::endl;
+		std::cerr << "[ERROR] The PE must have relocations!" << std::endl;
 		return false;
 	}
 	if (peconv::get_subsystem(my_exe) != IMAGE_SUBSYSTEM_WINDOWS_GUI) {
-		std::cout << "[WARNING] This is a console application! The recommended subsystem is GUI." << std::endl;
+		std::cout << "[INFO] This is a console application." << std::endl;
 	}
 	IMAGE_DATA_DIRECTORY* dotnet_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR);
 	if (dotnet_dir) {
-		std::cout << "[-] .NET applications are not supported!" << std::endl;
+		std::cerr << "[ERROR] .NET applications are not supported!" << std::endl;
 		return false;
 	}
 	IMAGE_DATA_DIRECTORY* tls_dir = peconv::get_directory_entry(my_exe, IMAGE_DIRECTORY_ENTRY_TLS);
@@ -109,7 +133,7 @@ bool is_supported_pe(BYTE *my_exe, size_t exe_size)
 			}
 		}
 		if (has_callback) {
-			std::cout << "[WARNING] This application has TLS callbacks, which are not supported!" << std::endl;
+			std::cout << "[INFO] This application has TLS callbacks." << std::endl;
 		}
 	}
 	return true;
@@ -121,7 +145,7 @@ bool is_supported_pe(const std::string &in_path)
 	size_t exe_size = 0;
 	BYTE *my_exe = peconv::load_pe_module(in_path.c_str(), exe_size, false, false);
 	if (!my_exe) {
-		std::cout << "[-] Could not read the input file!" << std::endl;
+		std::cerr << "[ERROR] Could not read the input file!" << std::endl;
 		return false;
 	}
 
@@ -129,7 +153,7 @@ bool is_supported_pe(const std::string &in_path)
 	peconv::free_pe_buffer(my_exe);
 
 	if (!is_ok) {
-		std::cout << "[-] Not supported input file!" << std::endl;
+		std::cerr << "[ERROR] Not supported input file!" << std::endl;
 		return false;
 	}
 	return true;
@@ -174,7 +198,7 @@ int main(int argc, char *argv[])
 	size_t ext_size = 0;
 	BYTE *ext_buf = shellcodify(my_exe, exe_size, ext_size, is64b);
 	if (!ext_buf) {
-		std::cout << "[-] Adding the stub failed!" << std::endl;
+		std::cerr << "[ERROR] Adding the stub failed!" << std::endl;
 		peconv::free_pe_buffer(my_exe);
 		return -3;
 	}
@@ -182,10 +206,10 @@ int main(int argc, char *argv[])
 	peconv::t_pe_dump_mode dump_mode = peconv::PE_DUMP_REALIGN;
 	ULONGLONG current_base = peconv::get_image_base(ext_buf);
 	if (peconv::dump_pe(out_str.c_str(), ext_buf, ext_size, current_base, dump_mode)) {
-		std::cout << "[+] Saved as: " << out_str << std::endl;
+		std::cout << "[INFO] Saved as: " << out_str << std::endl;
 	}
 	else {
-		std::cout << "[-] Failed to save the output!" << std::endl;
+		std::cerr << "[ERROR] Failed to save the output!" << std::endl;
 	}
 	peconv::free_pe_buffer(my_exe);
 	peconv::free_aligned(ext_buf);
