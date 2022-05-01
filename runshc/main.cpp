@@ -24,15 +24,32 @@ int main(int argc, char *argv[])
 	std::cout << "[*] Reading module from: " << in_path << std::endl;
 	BYTE *my_exe = peconv::load_file(in_path, exe_size);
 	if (!my_exe) {
-		std::cout << "[-] Loading file failed" << std::endl;
+		std::cerr << "[ERROR] Loading file failed" << std::endl;
 		return -1;
 	}
+	// if the shellcode is a converted PE, check its bitness before running...
+	const WORD arch = peconv::get_nt_hdr_architecture(my_exe);
+	if (arch) {
+#ifdef _WIN64
+		if (arch != IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+			std::cerr << "[ERROR] Bitness mismatch: the given payload is not compatibilie with this loader\n";
+			return 0;
+		}
+#else
+		if (arch != IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+			std::cerr << "[ERROR] Bitness mismatch: the given payload is not compatibilie with this loader\n";
+			return 0;
+		}
+#endif
+	}
+
 	BYTE *test_buf = peconv::alloc_aligned(exe_size, PAGE_EXECUTE_READWRITE);
 	if (!test_buf) {
 		peconv::free_file(my_exe);
-		std::cout << "[-] Allocating buffer failed" << std::endl;
+		std::cerr << "[ERROR] Allocating buffer failed" << std::endl;
 		return -2;
 	}
+
 	//copy file content into executable buffer:
 	memcpy(test_buf, my_exe, exe_size);
 
