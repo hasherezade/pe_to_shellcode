@@ -4,7 +4,7 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "0.9"
+#define VERSION "1.0-rc1"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
