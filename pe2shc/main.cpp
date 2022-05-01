@@ -6,9 +6,13 @@
 
 #define VERSION "0.9"
 
-bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
+bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
-	BYTE redir_code[] = "\x4D" //dec ebp
+	size_t value_pos = 8;
+	size_t redir_size = 0;
+	BYTE* redir_code = nullptr;
+
+	BYTE redir_code32[] = "\x4D" //dec ebp
 		"\x5A" //pop edx
 		"\x45" //inc ebp
 		"\x52" //push edx
@@ -21,10 +25,30 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw)
 		"\xFF\xD3" // call ebx
 		"\xc3"; // ret
 
-	size_t offset = sizeof(redir_code) - 8;
+	BYTE redir_code64[] = "\x4D\x5A" //pop r10
+		"\x45\x52" //push r10
+		"\xE8\x00\x00\x00\x00" //call <next_line>
+		"\x59" // pop rcx
+		"\x48\x83\xE9\x09" // sub rcx,9 (rcx -> Image Base)
+		"\x48\x8B\xD9" // mov rbx,rcx 
+		"\x48\x81\xC3" // add ebx,
+		"\x59\x04\x00\x00" // value
+		"\xFF\xD3" // call ebx
+		"\xc3"; // ret
 
+	if (is64b) {
+		redir_code = redir_code64;
+		redir_size = sizeof(redir_code64);
+	}
+	else {
+		redir_code = redir_code32;
+		redir_size = sizeof(redir_code32);
+	}
+	if (!redir_code) return false;
+
+	size_t offset = redir_size - value_pos;
 	memcpy(redir_code + offset, &raw, sizeof(DWORD));
-	memcpy(my_exe, redir_code, sizeof(redir_code));
+	memcpy(my_exe, redir_code, redir_size);
 	return true;
 }
 
@@ -47,7 +71,7 @@ BYTE* shellcodify(BYTE *my_exe, size_t exe_size, size_t &out_size, bool is64b)
 	memcpy(ext_buf + exe_size, stub, stub_size);
 
 	DWORD raw_addr = exe_size;
-	overwrite_hdr(ext_buf, ext_size, raw_addr);
+	overwrite_hdr(ext_buf, ext_size, raw_addr, is64b);
 
 	out_size = ext_size;
 	return ext_buf;
