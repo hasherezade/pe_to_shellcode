@@ -30,7 +30,7 @@ inline DWORD calc_checksum(CHAR_TYPE* curr_name, bool case_sensitive)
     for (k = 0; curr_name[k] != 0; k++) {
         CHAR_TYPE ch = curr_name[k];
         if (!case_sensitive) {
-            ch = (ch <= 'Z' && ch >= 'A') ? ch = (ch - 'A') + 'a' : ch;
+            ch = (ch <= 'Z' && ch >= 'A') ? (ch - 'A') + 'a' : ch;
         }
         for (size_t j = 0; j < 8; j++) {
             DWORD b = (ch ^ crc) & 1;
