@@ -217,7 +217,6 @@ reloc_abs:
 
 hldr_exit:
         lea     esp, dword [ebx + mapstk_size + krncrcstk_size]
-        mov dword [esp+0x1c], eax ; write the current EAX value on the stack in order to preserve it
         popad
         ret     4 
 hldr_end:
