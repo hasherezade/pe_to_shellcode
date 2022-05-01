@@ -106,6 +106,24 @@ bool load_imports(t_mini_iat iat, IMAGE_DATA_DIRECTORY importsDirectory, BYTE* i
     return (importDescriptor > 0);
 }
 
+bool run_tls_callbacks(IMAGE_DATA_DIRECTORY& tlsDir, BYTE* image)
+{
+    PIMAGE_TLS_DIRECTORY tls_dir = (PIMAGE_TLS_DIRECTORY)(tlsDir.VirtualAddress + (FIELD_PTR)image);
+    FIELD_PTR *callbacks_ptr = (FIELD_PTR*) tls_dir->AddressOfCallBacks; // this is VA...
+    if (!callbacks_ptr) return true;
+
+    while (callbacks_ptr != nullptr) {
+        FIELD_PTR callback_va = *callbacks_ptr;
+        if (!callback_va) break;
+
+        void(NTAPI * callback_func)(PVOID DllHandle, DWORD dwReason, PVOID) = (void(NTAPI*)(PVOID, DWORD, PVOID)) callback_va;
+        callback_func(image, DLL_PROCESS_ATTACH, NULL);
+
+        callbacks_ptr++;
+    }
+    return true;
+}
+
 int __stdcall main(void *module_base)
 {
     t_mini_iat iat;
@@ -130,6 +148,10 @@ int __stdcall main(void *module_base)
         if (!load_imports(iat, importDir, (BYTE*)module_base)) {
             return (-5);
         }
+    }
+    IMAGE_DATA_DIRECTORY& tlsDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+    if (tlsDir.VirtualAddress) {
+        run_tls_callbacks(tlsDir, (BYTE*)module_base);
     }
     DWORD ep_rva = pe->OptionalHeader.AddressOfEntryPoint;
     ULONG_PTR ep_va = (ULONG_PTR)module_base + ep_rva;
