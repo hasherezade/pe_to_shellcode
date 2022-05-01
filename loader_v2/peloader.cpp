@@ -110,7 +110,7 @@ bool apply_relocations(IMAGE_DATA_DIRECTORY& relocDir, BYTE* modulePtr, ULONG_PT
 
 bool load_imports(t_mini_iat iat, IMAGE_DATA_DIRECTORY importsDirectory, BYTE* image)
 {
-    PIMAGE_IMPORT_DESCRIPTOR importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(importsDirectory.VirtualAddress + (ULONG_PTR)image);
+    PIMAGE_IMPORT_DESCRIPTOR importDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)(importsDirectory.VirtualAddress + (FIELD_PTR)image);
 
     while (importDescriptor->Name != NULL)
     {
@@ -119,7 +119,7 @@ bool load_imports(t_mini_iat iat, IMAGE_DATA_DIRECTORY importsDirectory, BYTE* i
         if (!library) return false;
 
         PIMAGE_THUNK_DATA thunk = NULL;
-        thunk = (PIMAGE_THUNK_DATA)((ULONG_PTR)image + importDescriptor->FirstThunk);
+        thunk = (PIMAGE_THUNK_DATA)((FIELD_PTR)image + importDescriptor->FirstThunk);
 
         while (thunk->u1.AddressOfData != NULL)
         {
@@ -129,7 +129,7 @@ bool load_imports(t_mini_iat iat, IMAGE_DATA_DIRECTORY importsDirectory, BYTE* i
                 functionAddress = (FIELD_PTR)iat._GetProcAddress(library, functionOrdinal);
             }
             else {
-                PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((ULONG_PTR)image + thunk->u1.AddressOfData);
+                PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((FIELD_PTR)image + thunk->u1.AddressOfData);
                 functionAddress = (FIELD_PTR)iat._GetProcAddress(library, functionName->Name);
             }
             if (!functionAddress) return false;
@@ -167,13 +167,11 @@ int __stdcall main(void *module_base)
             return (-5);
         }
     }
-
-    const DWORD ep_rva = pe->OptionalHeader.AddressOfEntryPoint;
-    const ULONG_PTR ep_va = (ULONG_PTR)module_base + ep_rva;
-
+    DWORD ep_rva = pe->OptionalHeader.AddressOfEntryPoint;
+    ULONG_PTR ep_va = (ULONG_PTR)module_base + ep_rva;
     if (pe->FileHeader.Characteristics & IMAGE_FILE_DLL) {
-        BOOL (WINAPI *my_DllMain)(HINSTANCE, DWORD, LPVOID) 
-            = (BOOL(WINAPI *)(HINSTANCE, DWORD, LPVOID)) (ep_va);
+        BOOL(WINAPI * my_DllMain)(HINSTANCE, DWORD, LPVOID)
+            = (BOOL(WINAPI*)(HINSTANCE, DWORD, LPVOID)) ep_va;
         return my_DllMain((HINSTANCE)module_base, DLL_PROCESS_ATTACH, 0);
     }
     int(*my_main)() = (int(*)()) (ep_va);
