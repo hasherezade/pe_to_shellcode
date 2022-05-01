@@ -17,6 +17,9 @@ typedef struct _BASE_RELOCATION_ENTRY {
     WORD Type : 4;
 } BASE_RELOCATION_ENTRY;
 
+#define CRC_GetProcAddress 0xC97C1FFF
+#define CRC_LoadLibraryA 0x3FC1BD8D
+
 typedef struct
 {
     decltype(&LoadLibraryA) _LoadLibraryA;
@@ -30,11 +33,11 @@ bool init_iat(t_mini_iat &iat)
         return false;
     }
 
-    LPVOID load_lib = get_func_by_name((HMODULE)base, (LPSTR)"LoadLibraryA");
+    LPVOID load_lib = get_func_by_checksum((HMODULE)base, CRC_LoadLibraryA);
     if (!load_lib) {
         return false;
     }
-    LPVOID get_proc = get_func_by_name((HMODULE)base, (LPSTR)"GetProcAddress");
+    LPVOID get_proc = get_func_by_checksum((HMODULE)base, CRC_GetProcAddress);
     if (!get_proc) {
         return false;
     }

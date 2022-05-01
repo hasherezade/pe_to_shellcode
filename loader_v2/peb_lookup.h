@@ -63,7 +63,23 @@ inline LPVOID get_module_by_name(WCHAR* module_name)
     return nullptr;
 }
 
-inline LPVOID get_func_by_name(LPVOID module, char* func_name)
+inline DWORD calc_checksum(LPSTR curr_name)
+{
+    DWORD crc = 0xFFFFFFFF;
+    size_t k;
+    for (k = 0; curr_name[k] != 0; k++) {
+        char ch = curr_name[k];
+        for (size_t j = 0; j < 8; j++) {
+            DWORD b = (ch ^ crc) & 1;
+            crc >>= 1;
+            if (b) crc = crc ^ 0xEDB88320;
+            ch >>= 1;
+        }
+    }
+    return ~crc;
+}
+
+inline LPVOID get_func_by_checksum(LPVOID module, DWORD checksum)
 {
     IMAGE_DOS_HEADER* idh = (IMAGE_DOS_HEADER*)module;
     if (idh->e_magic != IMAGE_DOS_SIGNATURE) {
@@ -90,11 +106,8 @@ inline LPVOID get_func_by_name(LPVOID module, char* func_name)
         DWORD* funcRVA = (DWORD*)(funcsListRVA + (BYTE*)module + (*nameIndex) * sizeof(DWORD));
 
         LPSTR curr_name = (LPSTR)(*nameRVA + (BYTE*)module);
-        size_t k;
-        for (k = 0; func_name[k] != 0 && curr_name[k] != 0; k++) {
-            if (func_name[k] != curr_name[k]) break;
-        }
-        if (func_name[k] == 0 && curr_name[k] == 0) {
+        DWORD curr_crc = calc_checksum(curr_name);
+        if (curr_crc == checksum) {
             //found
             return (BYTE*)module + (*funcRVA);
         }
