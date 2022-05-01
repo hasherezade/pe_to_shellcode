@@ -1,1 +1,1 @@
-move stub32.bin ../../pe2shc/
+move stub32.bin ../../pe2shc/stub1/
