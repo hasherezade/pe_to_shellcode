@@ -131,8 +131,11 @@ int __stdcall main(void *module_base)
         return (-1);
     }
     IMAGE_DOS_HEADER* mz = (IMAGE_DOS_HEADER*)module_base;
+    if (mz->e_magic != IMAGE_DOS_SIGNATURE) {
+        return (-2);
+    }
     IMAGE_NT_HEADERS* pe = (IMAGE_NT_HEADERS*)(mz->e_lfanew + (ULONG_PTR)module_base);
-    if (pe->Signature != 0x4550) {
+    if (pe->Signature != IMAGE_NT_SIGNATURE) {
         return (-2);
     }
     IMAGE_DATA_DIRECTORY &relocDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
