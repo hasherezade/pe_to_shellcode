@@ -17,6 +17,7 @@ typedef struct _BASE_RELOCATION_ENTRY {
     WORD Type : 4;
 } BASE_RELOCATION_ENTRY;
 
+#define CRC_kernel32 0x6AE69F02
 #define CRC_GetProcAddress 0xC97C1FFF
 #define CRC_LoadLibraryA 0x3FC1BD8D
 
@@ -28,7 +29,7 @@ typedef struct
 
 bool init_iat(t_mini_iat &iat)
 {
-    LPVOID base = get_module_by_name((const LPWSTR)L"kernel32.dll");
+    LPVOID base = get_module_by_checksum(CRC_kernel32);
     if (!base) {
         return false;
     }
