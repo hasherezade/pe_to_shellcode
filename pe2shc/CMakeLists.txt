@@ -4,7 +4,7 @@ project ( pe2shc )
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 
-option(OLD_STUB "Build with the old stub" OFF)
+option(OLD_LOADER "Build with the old loader stub" OFF)
 
 # include libpeconv headers:
 include_directories ( ${PECONV_DIR}/include )
@@ -18,14 +18,15 @@ set (hdrs
 	resource.h
 )
 
-if( OLD_STUB)
-set (rsrc
-	resource1.rc
-)
+if( OLD_LOADER )
+	set (rsrc
+		resource1.rc
+	)
+	add_definitions(-DOLD_LOADER)
 else()
-set (rsrc
-	resource2.rc
-)
+	set (rsrc
+		resource2.rc
+	)
 endif()
 
 add_executable ( ${PROJECT_NAME} ${hdrs} ${srcs} ${rsrc} main.cpp )

@@ -8,7 +8,7 @@
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
-	size_t value_pos = 8;
+	const size_t value_pos = 8;
 	size_t redir_size = 0;
 	BYTE* redir_code = nullptr;
 
@@ -36,14 +36,16 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\xFF\xD3" // call ebx
 		"\xc3"; // ret
 
+	redir_code = redir_code32;
+	redir_size = sizeof(redir_code32);
+
+#ifndef OLD_LOADER
 	if (is64b) {
 		redir_code = redir_code64;
 		redir_size = sizeof(redir_code64);
 	}
-	else {
-		redir_code = redir_code32;
-		redir_size = sizeof(redir_code32);
-	}
+#endif
+
 	if (!redir_code) return false;
 
 	size_t offset = redir_size - value_pos;
