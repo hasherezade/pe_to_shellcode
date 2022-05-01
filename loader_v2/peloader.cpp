@@ -44,66 +44,30 @@ bool init_iat(t_mini_iat &iat)
     return true;
 }
 
-
-bool apply_reloc(ULONG_PTR relocField, ULONG_PTR oldBase, ULONG_PTR newBase)
+bool relocate(IMAGE_DATA_DIRECTORY& relocationsDirectory, BYTE* image, FIELD_PTR oldBase)
 {
-#ifdef _WIN64
-        ULONGLONG* relocateAddr = (ULONGLONG*)((ULONG_PTR)relocField);
-        ULONGLONG rva = (*relocateAddr) - oldBase;
-        (*relocateAddr) = rva + newBase;
-#else
-        DWORD* relocateAddr = (DWORD*)((ULONG_PTR)relocField);
-        ULONGLONG rva = ULONGLONG(*relocateAddr) - oldBase;
-        (*relocateAddr) = static_cast<DWORD>(rva + newBase);
-#endif
-    return true;
-}
-
-bool process_reloc_block(BASE_RELOCATION_ENTRY* block, SIZE_T entriesNum, DWORD page, PVOID modulePtr, ULONG_PTR oldBase)
-{
-    if (entriesNum == 0) {
-        return true; // nothing to process
-    }
-    BASE_RELOCATION_ENTRY* entry = block;
-    SIZE_T i = 0;
-    for (i = 0; i < entriesNum; i++) {
-        DWORD offset = entry->Offset;
-        DWORD type = entry->Type;
-        if (type == 0) {
-            break;
+    PIMAGE_BASE_RELOCATION ProcessBReloc = (PIMAGE_BASE_RELOCATION)(relocationsDirectory.VirtualAddress + (FIELD_PTR)image);
+    // apply relocations:
+    while (ProcessBReloc->VirtualAddress != 0)
+    {
+        const DWORD page = ProcessBReloc->VirtualAddress;
+        if (ProcessBReloc->SizeOfBlock < sizeof(IMAGE_BASE_RELOCATION)) {
+            continue;
         }
-        if (type != RELOC_FIELD) {
-            return false;
+        size_t count = (ProcessBReloc->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
+        BASE_RELOCATION_ENTRY* list = (BASE_RELOCATION_ENTRY*)(LPWORD)(ProcessBReloc + 1);
+        for (size_t i = 0; i < count; i++)
+        {
+            if (list[i].Type == 0) break;
+            if (list[i].Type != RELOC_FIELD) {
+                return false;
+            }
+            DWORD rva = list[i].Offset + page;
+            PULONG_PTR p = (PULONG_PTR)((LPBYTE)image + rva);
+            //relocate the address
+            *p = ((*p) - oldBase) + (FIELD_PTR)image;
         }
-        
-        DWORD reloc_field_rva = page + offset;
-        ULONG_PTR reloc_field = (ULONG_PTR)modulePtr + reloc_field_rva;
-        apply_reloc(reloc_field, oldBase, (ULONG_PTR)modulePtr);
-        entry = (BASE_RELOCATION_ENTRY*)((ULONG_PTR)entry + sizeof(WORD));
-    }
-    return true;
-}
-
-bool apply_relocations(IMAGE_DATA_DIRECTORY& relocDir, BYTE* modulePtr, ULONG_PTR oldBase)
-{
-    DWORD maxSize = relocDir.Size;
-    DWORD relocAddr = relocDir.VirtualAddress;
-
-    IMAGE_BASE_RELOCATION* reloc = NULL;
-    DWORD parsedSize = 0;
-    while (parsedSize < maxSize) {
-        reloc = (IMAGE_BASE_RELOCATION*)(relocAddr + parsedSize + (ULONG_PTR)modulePtr);
-        if (reloc->SizeOfBlock == 0) {
-            break;
-        }
-
-        const size_t entriesNum = (reloc->SizeOfBlock - 2 * sizeof(DWORD)) / sizeof(WORD);
-        const DWORD page = reloc->VirtualAddress;
-        BASE_RELOCATION_ENTRY* block = (BASE_RELOCATION_ENTRY*)((ULONG_PTR)reloc + sizeof(DWORD) + sizeof(DWORD));
-        if (!process_reloc_block(block, entriesNum, page, modulePtr, oldBase)) {
-            return false;
-        }
-        parsedSize += reloc->SizeOfBlock;
+        ProcessBReloc = (PIMAGE_BASE_RELOCATION)((LPBYTE)ProcessBReloc + ProcessBReloc->SizeOfBlock);
     }
     return true;
 }
@@ -158,7 +122,7 @@ int __stdcall main(void *module_base)
         return (-3);
     }
     const ULONG_PTR oldBase = pe->OptionalHeader.ImageBase;
-    if (!apply_relocations(relocDir, (BYTE*)module_base, oldBase)) {
+    if (!relocate(relocDir, (BYTE*)module_base, oldBase)) {
         return (-4);
     }
     IMAGE_DATA_DIRECTORY& importDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
