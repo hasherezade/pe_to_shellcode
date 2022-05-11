@@ -41,6 +41,7 @@ inline DWORD calc_checksum(CHAR_TYPE* curr_name, bool case_sensitive)
     }
     return ~crc;
 }
+
 inline LPVOID get_module_by_checksum(DWORD checksum)
 {
     PEB *peb;
