@@ -17,12 +17,12 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\x45" //inc ebp
 		"\x52" //push edx
 		"\xE8\x00\x00\x00\x00" //call <next_line>
-		"\x5B" // pop ebx
-		"\x83\xEB\x09" // sub ebx,9
-		"\x53" // push ebx (Image Base)
-		"\x81\xC3" // add ebx,
+		"\x58" // pop eax
+		"\x83\xE8\x09" // sub eax,9
+		"\x50" // push eax (Image Base)
+		"\x05" // add eax,
 		"\x59\x04\x00\x00" // value
-		"\xFF\xD3" // call ebx
+		"\xFF\xD0" // call ebx
 		"\xc3"; // ret
 
 	BYTE redir_code64[] = "\x4D\x5A" //pop r10
