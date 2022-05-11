@@ -92,14 +92,17 @@ bool load_imports(t_mini_iat iat, IMAGE_DATA_DIRECTORY importsDirectory, BYTE* i
         while (thunk->u1.AddressOfData != NULL)
         {
             FIELD_PTR functionAddress = NULL;
+            LPCSTR functionName = NULL;
             if (IMAGE_SNAP_BY_ORDINAL(thunk->u1.Ordinal)) {
-                LPCSTR functionOrdinal = (LPCSTR)IMAGE_ORDINAL(thunk->u1.Ordinal);
-                functionAddress = (FIELD_PTR)iat._GetProcAddress(library, functionOrdinal);
+                functionName = (LPCSTR)IMAGE_ORDINAL(thunk->u1.Ordinal);
             }
             else {
-                PIMAGE_IMPORT_BY_NAME functionName = (PIMAGE_IMPORT_BY_NAME)((FIELD_PTR)image + thunk->u1.AddressOfData);
-                functionAddress = (FIELD_PTR)iat._GetProcAddress(library, functionName->Name);
+                PIMAGE_IMPORT_BY_NAME functionByName = (PIMAGE_IMPORT_BY_NAME)((FIELD_PTR)image + thunk->u1.AddressOfData);
+                functionName = functionByName->Name;
             }
+            if (!functionName) return false;
+
+            functionAddress = (FIELD_PTR)iat._GetProcAddress(library, functionName);
             if (!functionAddress) return false;
 
             thunk->u1.Function = functionAddress;
@@ -120,7 +123,8 @@ bool run_tls_callbacks(IMAGE_DATA_DIRECTORY& tlsDir, BYTE* image)
         FIELD_PTR callback_va = *callbacks_ptr;
         if (!callback_va) break;
 
-        void(NTAPI * callback_func)(PVOID DllHandle, DWORD dwReason, PVOID) = (void(NTAPI*)(PVOID, DWORD, PVOID)) callback_va;
+        void(NTAPI * callback_func)(PVOID DllHandle, DWORD dwReason, PVOID) 
+            = (void(NTAPI*)(PVOID, DWORD, PVOID)) callback_va;
         callback_func(image, DLL_PROCESS_ATTACH, NULL);
 
         callbacks_ptr++;

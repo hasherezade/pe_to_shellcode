@@ -4,7 +4,7 @@
 #include "peconv.h"
 #include "resource.h"
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
@@ -17,12 +17,12 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\x45" //inc ebp
 		"\x52" //push edx
 		"\xE8\x00\x00\x00\x00" //call <next_line>
-		"\x5B" // pop ebx
-		"\x48\x83\xEB\x09" // sub ebx,9
-		"\x53" // push ebx (Image Base)
-		"\x48\x81\xC3" // add ebx,
+		"\x58" // pop eax
+		"\x83\xE8\x09" // sub eax,9
+		"\x50" // push eax (Image Base)
+		"\x05" // add eax,
 		"\x59\x04\x00\x00" // value
-		"\xFF\xD3" // call ebx
+		"\xFF\xD0" // call ebx
 		"\xc3"; // ret
 
 	BYTE redir_code64[] = "\x4D\x5A" //pop r10
@@ -30,10 +30,10 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\xE8\x00\x00\x00\x00" //call <next_line>
 		"\x59" // pop rcx
 		"\x48\x83\xE9\x09" // sub rcx,9 (rcx -> Image Base)
-		"\x48\x8B\xD9" // mov rbx,rcx 
-		"\x48\x81\xC3" // add ebx,
+		"\x48\x8B\xC1" // mov rax,rcx 
+		"\x48\x05" // add eax,
 		"\x59\x04\x00\x00" // value
-		"\xFF\xD3" // call ebx
+		"\xFF\xD0" // call eax
 		"\xc3"; // ret
 
 	redir_code = redir_code32;
