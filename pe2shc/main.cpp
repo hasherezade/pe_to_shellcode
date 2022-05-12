@@ -193,7 +193,11 @@ int main(int argc, char *argv[])
 		system("pause");
 		return 0;
 	}
-
+#ifdef OLD_LOADER
+	std::cout << "Using: Loader v1\n";
+#else
+	std::cout << "Using: Loader v2\n";
+#endif
 	std::string in_path = argv[1];
 	std::string  out_str = make_out_name(in_path);
 	if (argc > 2) {
