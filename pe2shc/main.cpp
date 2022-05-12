@@ -12,6 +12,19 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 	size_t redir_size = 0;
 	BYTE* redir_code = nullptr;
 
+	BYTE redir_code32_64[] = "\x4D" //dec ebp
+		"\x5A" //pop edx
+		"\x45" //inc ebp
+		"\x52" //push edx
+		"\xE8\x00\x00\x00\x00" //call <next_line>
+		"\x5B" // pop ebx
+		"\x48\x83\xEB\x09" // sub ebx,9
+		"\x53" // push ebx (Image Base)
+		"\x48\x81\xC3" // add ebx,
+		"\x59\x04\x00\x00" // value
+		"\xFF\xD3" // call ebx
+		"\xc3"; // ret
+
 	BYTE redir_code32[] = "\x4D" //dec ebp
 		"\x5A" //pop edx
 		"\x45" //inc ebp
@@ -22,7 +35,7 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\x50" // push eax (Image Base)
 		"\x05" // add eax,
 		"\x59\x04\x00\x00" // value
-		"\xFF\xD0" // call ebx
+		"\xFF\xD0" // call eax
 		"\xc3"; // ret
 
 	BYTE redir_code64[] = "\x4D\x5A" //pop r10
@@ -36,16 +49,18 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 		"\xFF\xD0" // call eax
 		"\xc3"; // ret
 
+#ifdef OLD_LOADER
+	redir_code = redir_code32_64;
+	redir_size = sizeof(redir_code32_64);
+#else
 	redir_code = redir_code32;
 	redir_size = sizeof(redir_code32);
 
-#ifndef OLD_LOADER
 	if (is64b) {
 		redir_code = redir_code64;
 		redir_size = sizeof(redir_code64);
 	}
 #endif
-
 	if (!redir_code) return false;
 
 	size_t offset = redir_size - value_pos;
