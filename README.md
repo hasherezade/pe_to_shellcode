@@ -17,14 +17,14 @@ It is inspired by Stephen Fewer's [ReflectiveDLLInjection](https://github.com/st
 
 Scope of the project
 -
-The stub supports only basic structures of PE format, such as:
+🟢 The stub supports only basic structures of PE format, such as:
 + relocations
 + imports
 + TLS callbacks (called once, before the Entry Point is executed)
 
 Please keep in mind, that although for the majority of PE files this is sufficient, some executables you encounter may be using other, more complex aspects of the PE format. It means, not every PE can be successfuly converted to a shellcode.
 
-Examples of currently not supported elements:
+🚫 Examples of currently not supported elements:
 + exceptions (if the executable you converted will be run as a shellcode, and throw the exception, the appropriate exception handler will not be found, and the application will crash)
 + Delay Load Imports (only the basic Import Table support is implemented)
 + MUI files (if the executable you converted expects some elements of the GUI have to be loaded from a MUI file, it won't work)
