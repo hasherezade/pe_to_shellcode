@@ -15,6 +15,15 @@ Objective
 The goal of this project is to provide a possibility to generate PE files that can be injected with minimal effort.
 It is inspired by Stephen Fewer's [ReflectiveDLLInjection](https://github.com/stephenfewer/ReflectiveDLLInjection) - but the difference is that with pe2shc you can add the reflective loading stub post-compilation. Also, the header of the PE file is modified in such a way, that you can start executing the injected buffer from the very beginning - just like you would do with a shellcode. It will automatically find the stub, and continue loading the full PE.
 
+Scope of the project
+-
+The stub supports only basic structures of PE format, such as:
++ relocations
++ imports
++ TLS callbacks (called once, before the Entry Point is executed)
+
+Please keep in mind, that although for the majority of PE files this is sufficient, some executables you encounter may be using other, more complex aspects of the PE format. It means, not every PE can be successfuly converted to shellcode.
+
 Builds
 -
 📦 ⚙️ Download the latest [release](https://github.com/hasherezade/pe_to_shellcode/releases).
