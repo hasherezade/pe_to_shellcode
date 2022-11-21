@@ -25,7 +25,7 @@ bool load_and_run(t_module_params& args)
 	peconv::free_file(args.my_exe);
 	args.my_exe = nullptr;
 
-	std::cout << "[*] Running the shellcode:" << std::hex << (ULONG_PTR) test_buf << " to: " << (ULONG_PTR)(test_buf + args.exe_size)<<  std::endl;
+	std::cout << "[*] Running the shellcode [" << std::hex << (ULONG_PTR) test_buf << " - " << (ULONG_PTR)(test_buf + args.exe_size) << "]" << std::endl;
 	//run it:
 	int (*my_main)() = (int(*)()) ((ULONGLONG)test_buf);
 	int ret_val = my_main();
@@ -33,9 +33,9 @@ bool load_and_run(t_module_params& args)
 	min_hdr_t *my_hdr = (min_hdr_t*)test_buf;
 	if (my_hdr->load_status == LDS_ATTACHED) {
 		//run again to unload DLL:
-		std::cout << "Running again to unload the DLL!\n";
+		std::cout << "[*] Running again to unload the DLL...\n";
 		my_main();
-		std::cout << "Load status: " << (int)my_hdr->load_status << "\n";
+		std::cout << "[*] Load status: " << (int)my_hdr->load_status << "\n";
 	}
 	peconv::free_aligned(test_buf, args.exe_size);
 	std::cout << "[+] The shellcode finished with a return value: " << std::hex << ret_val << std::endl;
@@ -56,9 +56,7 @@ DWORD WINAPI mod_runner(LPVOID lpParam)
 
 bool run_in_new_thread(t_module_params &args)
 {
-	std::cout << __FUNCTION__ << std::endl;
-
-	std::cout << ">>> Creating the thread...\n";
+	std::cout << ">>> Creating a new thread...\n";
 	HANDLE hThead = CreateThread(
 		NULL,                   // default security attributes
 		0,                      // use default stack size  
@@ -77,7 +75,7 @@ bool run_in_new_thread(t_module_params &args)
 
 bool run_in_curr_thread(t_module_params &args)
 {
-	std::cout << __FUNCTION__ << std::endl;
+	std::cout << ">>> Running in a current thread...\n";
 	load_and_run(args);
 	return (args.is_run);
 }
