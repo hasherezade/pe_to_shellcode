@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 #add the application that will be used for tests:
 add_subdirectory ( test_case1 )
 add_subdirectory ( dcp_test )
-
+add_subdirectory (  test_case2_dll )
 enable_testing()
 
 #WARNING: in order for tests to work, all the binaries must be installed by: cmake --build . --target install
@@ -29,3 +29,14 @@ set_tests_properties(ConvTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "Saved as:
 add_test(RunTestCase1 "${CMAKE_INSTALL_PREFIX}//runshc.exe" "${CMAKE_INSTALL_PREFIX}//test_case1.shc.exe")
 set_tests_properties(RunTestCase1 PROPERTIES DEPENDS test_case1)
 set_tests_properties(RunTestCase1 PROPERTIES PASS_REGULAR_EXPRESSION "Test passed!")
+
+# 4) convert DLL
+add_test(ConvTestCase2 "${CMAKE_INSTALL_PREFIX}//pe2shc.exe" "${CMAKE_INSTALL_PREFIX}//test_case2.dll" "${CMAKE_INSTALL_PREFIX}//test_case2.shc.dll")
+set_tests_properties(ConvTestCase2 PROPERTIES PASS_REGULAR_EXPRESSION "Saved as:")
+set_tests_properties(RunPe2Shc PROPERTIES DEPENDS pe2shc)
+
+# 5) does converted DLL loads & unloads properly
+add_test(RunTestCase2 "${CMAKE_INSTALL_PREFIX}//runshc.exe" "${CMAKE_INSTALL_PREFIX}//test_case2.shc.dll")
+set_tests_properties(RunTestCase2 PROPERTIES DEPENDS test_case2_dll)
+set_tests_properties(RunTestCase2 PROPERTIES DEPENDS runshc)
+set_tests_properties(RunTestCase2 PROPERTIES PASS_REGULAR_EXPRESSION "DLL loaded*DLL unloaded*>>> FINISHED.")
