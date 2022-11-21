@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include "peb_lookup.h"
+#include "peloader.h"
 
 #define RELOC_32BIT_FIELD 3
 #define RELOC_64BIT_FIELD 0xA
@@ -146,31 +147,66 @@ int __stdcall main(void *module_base)
     if (pe->Signature != IMAGE_NT_SIGNATURE) {
         return (-2);
     }
-    IMAGE_DATA_DIRECTORY &relocDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-    if (!relocDir.VirtualAddress) {
-        return (-3);
+
+    min_hdr_t* my_hdr = (min_hdr_t*)module_base;
+    if (my_hdr->load_status == LDS_RUN) {
+        // do not allow to run again:
+        return ERROR_ALREADY_INITIALIZED;
     }
-    const ULONG_PTR oldBase = pe->OptionalHeader.ImageBase;
-    if (!relocate(relocDir, (BYTE*)module_base, oldBase)) {
-        return (-4);
+    if (my_hdr->load_status == LDS_ATTACHED) {
+        if ((pe->FileHeader.Characteristics & IMAGE_FILE_DLL) == 0) {
+            // not a DLL, this should not happed:
+            return ERROR_ALREADY_INITIALIZED;
+        }
+        DWORD ep_rva = pe->OptionalHeader.AddressOfEntryPoint;
+        ULONG_PTR ep_va = (ULONG_PTR)module_base + ep_rva;
+        BOOL(WINAPI * my_DllMain)(HINSTANCE, DWORD, LPVOID)
+            = (BOOL(WINAPI*)(HINSTANCE, DWORD, LPVOID)) ep_va;
+        BOOL is_ok = my_DllMain((HINSTANCE)module_base, DLL_PROCESS_DETACH, 0);
+        if (is_ok) {
+            // no longer attached:
+            my_hdr->load_status = LDS_RUN;
+        }
+        return is_ok;
     }
-    IMAGE_DATA_DIRECTORY& importDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
-    if (importDir.VirtualAddress) {
-        if (!load_imports(iat, importDir, (BYTE*)module_base)) {
-            return (-5);
+    if (my_hdr->load_status == LDS_CLEAN) {
+        IMAGE_DATA_DIRECTORY& relocDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+        if (!relocDir.VirtualAddress) {
+            return (-3);
+        }
+        const ULONG_PTR oldBase = pe->OptionalHeader.ImageBase;
+        if (!relocate(relocDir, (BYTE*)module_base, oldBase)) {
+            return (-4);
+        }
+        IMAGE_DATA_DIRECTORY& importDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+        if (importDir.VirtualAddress) {
+            if (!load_imports(iat, importDir, (BYTE*)module_base)) {
+                return (-5);
+            }
+        }
+        IMAGE_DATA_DIRECTORY& tlsDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
+        if (tlsDir.VirtualAddress) {
+            run_tls_callbacks(tlsDir, (BYTE*)module_base);
         }
     }
-    IMAGE_DATA_DIRECTORY& tlsDir = pe->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS];
-    if (tlsDir.VirtualAddress) {
-        run_tls_callbacks(tlsDir, (BYTE*)module_base);
-    }
+    my_hdr->load_status = LDS_LOADED;
+
     DWORD ep_rva = pe->OptionalHeader.AddressOfEntryPoint;
     ULONG_PTR ep_va = (ULONG_PTR)module_base + ep_rva;
+    BOOL is_ok = FALSE;
+
+    my_hdr->load_status = LDS_RUN;
     if (pe->FileHeader.Characteristics & IMAGE_FILE_DLL) {
         BOOL(WINAPI * my_DllMain)(HINSTANCE, DWORD, LPVOID)
             = (BOOL(WINAPI*)(HINSTANCE, DWORD, LPVOID)) ep_va;
-        return my_DllMain((HINSTANCE)module_base, DLL_PROCESS_ATTACH, 0);
+        is_ok = my_DllMain((HINSTANCE)module_base, DLL_PROCESS_ATTACH, 0);
+        if (is_ok) {
+            my_hdr->load_status = LDS_ATTACHED;
+        }
     }
-    int(*my_main)() = (int(*)()) (ep_va);
-    return my_main();
+    else {
+        int(*my_main)() = (int(*)()) (ep_va);
+        is_ok = my_main();
+    }
+    return is_ok;
 }

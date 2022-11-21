@@ -5,6 +5,7 @@
 #include "resource.h"
 
 #define VERSION "1.1"
+#include "..\loader_v2\peloader.h"
 
 bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 {
@@ -62,10 +63,16 @@ bool overwrite_hdr(BYTE *my_exe, size_t exe_size, DWORD raw, bool is64b)
 	}
 #endif
 	if (!redir_code) return false;
-
+	if (redir_size > MAX_REDIR_SIZE) {
+		std::cerr << "The selected redir stub exceed the maximal size: " << std::dec << MAX_REDIR_SIZE << "\n";
+		return false;
+	}
 	size_t offset = redir_size - value_pos;
 	memcpy(redir_code + offset, &raw, sizeof(DWORD));
-	memcpy(my_exe, redir_code, redir_size);
+
+	min_hdr_t* my_hdr = (min_hdr_t*)my_exe;
+	memcpy(my_hdr->redir, redir_code, redir_size);
+	my_hdr->load_status = LDS_CLEAN;
 	return true;
 }
 
