@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include <peconv.h>
+
+#define VERSION "1.2"
 #include "..\loader_v2\peloader.h"
 
 typedef struct {
@@ -85,7 +87,7 @@ bool run_in_curr_thread(t_module_params &args)
 int main(int argc, char *argv[])
 {
 	if (argc < 2) {
-		std::cout << "~ runshc ~\n"
+		std::cout << "~ runshc v." << VERSION << " ~\n"
 			<< "Run shellcode: loads and deploys shellcode file.\n";
 #ifdef _WIN64
 		std::cout << "For 64-bit shellcodes.\n";
