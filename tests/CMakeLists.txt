@@ -38,5 +38,5 @@ set_tests_properties(RunPe2Shc PROPERTIES DEPENDS pe2shc)
 # 5) does converted DLL loads & unloads properly
 add_test(RunTestCase2 "${CMAKE_INSTALL_PREFIX}//runshc.exe" "${CMAKE_INSTALL_PREFIX}//test_case2.shc.dll")
 set_tests_properties(RunTestCase2 PROPERTIES DEPENDS test_case2_dll)
-set_tests_properties(RunTestCase2 PROPERTIES DEPENDS runshc))
+set_tests_properties(RunTestCase2 PROPERTIES DEPENDS runshc)
 set_tests_properties(RunTestCase2 PROPERTIES PASS_REGULAR_EXPRESSION ">>> FINISHED.")
