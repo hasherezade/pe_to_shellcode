@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <peconv.h>
+#include "..\loader_v2\peloader.h"
 
 typedef struct {
 	BYTE* my_exe;
@@ -29,14 +30,12 @@ bool load_and_run(t_module_params& args)
 	int (*my_main)() = (int(*)()) ((ULONGLONG)test_buf);
 	int ret_val = my_main();
 	args.is_run = true;
-	if (peconv::is_module_dll(test_buf)) {
-		//unload DLL:
-		DWORD ep_rva = peconv::get_entry_point_rva(test_buf);
-		std::cout << "Unload DLL, RVA: " << ep_rva << "\n";
-		ULONG_PTR ep_va = (ULONG_PTR)test_buf + ep_rva;
-		BOOL(WINAPI * my_DllMain)(HINSTANCE, DWORD, LPVOID)
-			= (BOOL(WINAPI*)(HINSTANCE, DWORD, LPVOID)) ep_va;
-		my_DllMain((HINSTANCE)test_buf, DLL_PROCESS_DETACH, 0);
+	min_hdr_t *my_hdr = (min_hdr_t*)test_buf;
+	if (my_hdr->load_status == LDS_ATTACHED) {
+		//run again to unload DLL:
+		std::cout << "Running again to unload the DLL!\n";
+		my_main();
+		std::cout << "Load status: " << (int)my_hdr->load_status << "\n";
 	}
 	peconv::free_aligned(test_buf, args.exe_size);
 	std::cout << "[+] The shellcode finished with a return value: " << std::hex << ret_val << std::endl;
