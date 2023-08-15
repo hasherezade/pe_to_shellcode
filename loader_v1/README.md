@@ -4,5 +4,6 @@ Loader is the part dedicated to manual loading of a PE. It is automatically adde
 
 Loader is built separately from the main executable.
 + Buiding requires [YASM](https://yasm.tortall.net/)
-+ Run `make.bat`, appropriately for 32 and 64 bit version of the loader
++ Run `make.bat`, appropriately for 32 and 64 bit version of the loader to compile
++ Run `install.bat`, to copy compiled module into the code directory of the main application. Now the main application can be compiled with the newly created loader.
   
