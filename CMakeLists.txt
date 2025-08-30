@@ -1,4 +1,4 @@
-cmake_minimum_required ( VERSION 3.0 )
+cmake_minimum_required ( VERSION 3.12 )
 
 # replace "peconv_project" by your own project name:
 project ( pe_to_shellcode )
